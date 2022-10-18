@@ -1,0 +1,9 @@
+root: /home/peoplefund/workspace/jihwan-css/CSS
+
+train: ${dataset.root}/dataset/X_tmp_train.parquet
+test: ${dataset.root}/dataset/X_feb.parquet
+
+target_name: target
+
+cat_feature_path: ${dataset.root}/feature/css_categorical_list.csv
+feature_list_path: ${dataset.root}/feature/css_train_feat_list.csv

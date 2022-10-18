@@ -1,0 +1,18 @@
+fold: 5
+path: res/models
+name: 5fold_tabnet_seed_42
+result: 5fold_tabnet_seed42.pkl
+
+params:
+  optimizer_lr: 0.02
+  scheduler_step_size: 50
+  scheduler_gamma: 0.9
+  mask_type: entmax # sparsemax
+
+fit_params:
+  max_epochs: 100
+  patience: 2
+  batch_size: 1024
+  virtual_batch_size: 256
+  num_workers: 32
+  drop_last: False

@@ -1,0 +1,28 @@
+params:
+  hidden_size: 32
+  emphasis: 0.8
+
+optimizer:
+  init_lr: 0.02
+  lr_gamma: 0.02
+
+schedular:
+  gamma: 0.2
+
+earlystopper:
+  min_delta: 0.0000007
+  patience: 200
+  verbose: 1
+
+noise_ratio: 0.25
+data_batch_size: 256
+num_workers: 64
+iterations: 3000
+
+loss_weight:
+  cat: 10
+  num: 14
+
+path: res/models
+name: deepstack_dae
+result: deepstack_dae.pkl

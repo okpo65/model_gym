@@ -1,0 +1,22 @@
+fold: 5
+params:
+  boosting: dart
+  learning_rate: 0.01
+  objective: binary
+  num_leaves: 100
+  lambda_l2: 2
+  lambda_l1: 0.0001
+  feature_fraction: 0.2
+  bagging_fraction: 0.5
+  bagging_freq: 10
+  min_data_in_leaf: 40
+  seed: 42
+  verbose: -1
+
+path: res/models
+name: 5fold_lgbm_seed_42
+result: 5fold_lgbm_seed42.pkl
+working: working
+early_stopping_rounds: 100
+num_boost_round: 10500
+verbose: 500

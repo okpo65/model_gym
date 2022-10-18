@@ -1,0 +1,8 @@
+defaults:
+  - dataset: dataset
+  - model: tabnet
+  - features: features
+
+output:
+  path: output
+  name: 5fold_tabnet_seed_42.csv

@@ -1,0 +1,13 @@
+fold: 5
+params:
+  learning_rate: 0.001
+  iterations: 30000
+  max_depth: 7
+  loss_function: Logloss
+  l2_leaf_reg: 70
+
+early_stopping_rounds: 500
+path: res/model
+result: catboost
+seed: 42
+verbose: 500

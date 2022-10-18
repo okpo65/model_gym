@@ -1,0 +1,119 @@
+import os
+import warnings
+from pathlib import Path
+from typing import Callable, NoReturn, Optional, Tuple
+
+import lightgbm as lgb
+import numpy as np
+import pandas as pd
+import wandb.catboost as wandb_cb
+import wandb.lightgbm as wandb_lgb
+import wandb.xgboost as wandb_xgb
+import xgboost as xgb
+from catboost import CatBoostClassifier, Pool
+from hydra.utils import get_original_cwd
+
+from .base_boosting import BaseModel
+
+class LGBMTrainer(BaseModel):
+    def __init__(self, **kwargs) -> NoReturn:
+        super().__init__(**kwargs)
+
+    def _train(self,
+               X_train: pd.DataFrame,
+               y_train: pd.Series,
+               X_valid: Optional[pd.DataFrame]=None,
+               y_valid: Optional[pd.DataFrame]=None) -> lgb.Booster:
+
+        train_set = lgb.Dataset(
+            data=X_train,
+            label=y_train,
+            categorical_feature=[],
+        )
+        valid_set = lgb.Dataset(
+            data=X_valid,
+            label=y_valid,
+            categorical_feature=[],
+        )
+
+        model = lgb.train(
+            train_set=train_set,
+            valid_sets=[train_set, valid_set],
+            params=dict(self.config.model.params),
+            verbose_eval=self.config.model.verbose,
+            num_boost_round=self.config.model.num_boost_round,
+            # feval=lgb_amex_metric,
+            # fobj=self._weighted_logloss if self.config.model.loss.is_customized else None,
+        )
+
+        # model = (
+        #     lgb.Booster(
+        #         model_file=Path(get_original_cwd())
+        #                    / self.config.model.path
+        #                    / self.config.model.working
+        #                    / f"{self.config.model.name}_fold{self._num_fold_iter}.lgb"
+        #     )
+        #     if not self.config.model.loss.is_customized
+        #     else model
+        # )
+        return model
+
+class CatBoostTrainer(BaseModel):
+    def __init__(self, **kwargs) -> NoReturn:
+        super().__init__(**kwargs)
+
+    def _train(self,
+               X_train: pd.DataFrame,
+               y_train: pd.Series,
+               X_valid: Optional[pd.DataFrame] = None,
+               y_valid: Optional[pd.Series] = None) -> CatBoostClassifier:
+        """
+        :return: Catboost Model
+        """
+
+        train_data = Pool(
+            data=X_train,
+            label=y_train,
+            cat_features=[]
+        )
+        valid_data = Pool(
+            data=X_valid,
+            label=y_valid,
+            cat_features=[]
+        )
+        model = CatBoostClassifier(
+            random_state=self.config.model.seed,
+            cat_features=[],
+            **self.config.model.params
+        )
+        model.fit(
+            train_data,
+            eval_set=valid_data,
+            early_stopping_rounds=self.config.model.early_stopping_rounds,
+            verbose=self.config.model.verbose
+        )
+        return model
+
+class XGBoostTrainer(BaseModel):
+    def __init__(self, **kwargs) -> NoReturn:
+        super().__init__(**kwargs)
+
+    def _train(self,
+               X_train: pd.DataFrame,
+               y_train: pd.Series,
+               X_valid: Optional[pd.DataFrame] = None,
+               y_valid: Optional[pd.Series] = None) -> xgb.Booster:
+        dtrain = xgb.DMatrix(data=X_train, label=y_train)
+        dvalid = xgb.DMatrix(data=X_valid, label=y_valid)
+        watchlist = [(dtrain, "train"), (dvalid, "valid")]
+
+        model = xgb.train(
+            dict(self.config.model.params),
+            dtrain=dtrain,
+            evals=watchlist,
+            num_boost_round=self.config.model.num_boost_round,
+            early_stopping_rounds=self.config.model.early_stopping_rounds,
+            verbose_eval=self.config.model.verbose,
+        )
+
+        return model

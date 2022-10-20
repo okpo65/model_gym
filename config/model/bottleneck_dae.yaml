@@ -1,6 +1,8 @@
 params:
-  hidden_size: 128
+  hidden_size: 32
+  bottleneck_size: 10
   emphasis: 0.8
+  dropout_ratio: 0.2
 
 optimizer:
   init_lr: 3e-5
@@ -29,5 +31,5 @@ loss_weight:
   num: 0.8
 
 path: res/models
-name: deepstack_dae
-result: deepstack_dae.pkl
+name: bottleneck_dae
+result: bottleneck_dae.pkl

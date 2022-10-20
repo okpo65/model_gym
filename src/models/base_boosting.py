@@ -5,7 +5,8 @@ import warnings
 from abc import ABCMeta, abstractclassmethod, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, NoReturn, Optional
+from typing import Any, Callable, Dict, NoReturn, Optional, List
+from torch.utils.data import Dataset, DataLoader
 
 import lightgbm as lgb
 import numpy as np
@@ -15,6 +16,7 @@ import xgboost as xgb
 from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 from sklearn.model_selection import StratifiedKFold
+from ..dataset.dataset import DataContainer
 from wandb.sklearn import plot_feature_importances
 
 @dataclass
@@ -22,6 +24,91 @@ class ModelResult:
     oof_preds: np.ndarray
     models: Dict[str, Any]
     scores: Dict[str, Dict[str, float]]
+
+
+class BaseDAEModel(metaclass=ABCMeta):
+    def __init__(self,
+                 config: DictConfig):
+        self.config = config
+        self.result = None
+
+    @abstractmethod
+    def _train(self,
+               train_dl: DataLoader,
+               valid_dl: DataLoader,
+               len_cat: int,
+               len_num: int) -> NoReturn:
+        raise NotImplementedError
+
+    def save_model(self) -> NoReturn:
+        """
+        Save Model
+        """
+
+        model_path = (
+            Path(get_original_cwd()) / self.config.model.path / self.config.model.result
+        )
+
+        with open(model_path, 'wb') as output:
+            pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+
+    def train(self,
+              train_cont: DataContainer) -> ModelResult:
+        train_dl, valid_dl = train_cont.get_dae_dataset(batch_size=self.config.model.batch_size,
+                                                        num_workers=self.config.model.num_workers)
+        len_cat, len_num = train_cont.len_cat, train_cont.len_num
+
+        model = self._train(train_dl, valid_dl, len_cat, len_num)
+
+        self.result = ModelResult(
+            oof_preds=np.array(),
+            models=[model],
+            scores={}
+        )
+        return self.result
+
+class BaseDLModel(metaclass=ABCMeta):
+    def __init__(self,
+                 config: DictConfig,
+                 metric: Callable[[np.ndarray, np.ndarray], float]):
+        self.config = config
+        self.metric = metric
+        self.result = None
+
+    @abstractmethod
+    def _train(self,
+               train_dl: DataLoader,
+               valid_dl: DataLoader,
+               len_cat: int,
+               len_num: int) -> NoReturn:
+        raise NotImplementedError
+
+
+    def save_model(self) -> NoReturn:
+            """
+            Save Model
+            """
+
+            model_path = (
+                Path(get_original_cwd()) / self.config.model.path / self.config.model.result
+            )
+
+            with open(model_path, 'wb') as output:
+                pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+
+    def train(self,
+              train_cont: DataContainer):
+        train_dl, valid_dl = train_cont.get_dae_dataset(batch_size=self.config.model.batch_size,
+                                                        num_workers=self.config.model.num_workers)
+        len_cat, len_num = train_cont.len_cat, train_cont.len_num
+        model = self._train(train_dl, valid_dl, len_cat, len_num)
+
+        self.result = ModelResult(
+            oof_preds=np.array(),
+            models=[model],
+            scores={}
+        )
+        return self.result
 
 class BaseModel(metaclass=ABCMeta):
     def __init__(self,
@@ -35,7 +122,7 @@ class BaseModel(metaclass=ABCMeta):
         self._num_fold_iter = 0
         self.result = None
 
-    # @abstractmethod
+    @abstractmethod
     def _train(self,
                X_train: pd.DataFrame,
                y_train: pd.Series,
@@ -56,8 +143,7 @@ class BaseModel(metaclass=ABCMeta):
             pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
 
     def train(self,
-              train_x: pd.DataFrame,
-              train_y: pd.Series) -> ModelResult:
+              train_cont: DataContainer) -> ModelResult:
         """
         :param train_x: train dataset
         :param train_y: target dataset
@@ -67,6 +153,8 @@ class BaseModel(metaclass=ABCMeta):
         scores = dict()
         folds = self.config.model.fold
         seed = self.config.dataset.seed
+
+        train_x, train_y = train_cont.get_dataframe()
 
         str_kf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=seed)
         splits = str_kf.split(train_x, train_y)

@@ -45,17 +45,6 @@ class LGBMTrainer(BaseModel):
             # feval=lgb_amex_metric,
             # fobj=self._weighted_logloss if self.config.model.loss.is_customized else None,
         )
-
-        # model = (
-        #     lgb.Booster(
-        #         model_file=Path(get_original_cwd())
-        #                    / self.config.model.path
-        #                    / self.config.model.working
-        #                    / f"{self.config.model.name}_fold{self._num_fold_iter}.lgb"
-        #     )
-        #     if not self.config.model.loss.is_customized
-        #     else model
-        # )
         return model
 
 class CatBoostTrainer(BaseModel):

@@ -10,6 +10,7 @@ from src.models.boosting import LGBMTrainer, CatBoostTrainer, XGBoostTrainer
 from src.models.tabnet import TabNetTrainer
 from src.models.autoencoder import DAE
 from src.evaluation.evaluation import css_metric
+from src.dataset.preprocessing import Preprocessor
 import hydra
 from omegaconf import DictConfig
 
@@ -17,23 +18,26 @@ from omegaconf import DictConfig
 def _main(cfg: DictConfig):
     X_train, y_train = load_train_data(cfg)
 
+    preprocessor = Preprocessor(cfg.preprocessing,
+                                X_train,
+                                cat_features=[*cfg.features.cat_features])
+    train_cont, _ = preprocessor.perform()
+    df_tmp, _ = train_cont.get_dataframe()
+    print("sdfsdf",df_tmp)
+    dae = DAE(config=cfg)
+    dae.train(train_cont)
+    dae.save_model()
+
     # tabnet = TabNetTrainer(params=None,
     #                        config=cfg,
     #                        metric=css_metric)
     # tabnet.train(X_train, y_train)
     # tabnet.save_model()
 
-    dae = DAE(config=cfg, metric=css_metric)
-    X, len_cat, len_num = get_dataset_with_cat_handler(X_train,
-                                                       [*self.config.features.cat_features])
-    dae_dl = get_dae_dataset(X,
-                             batch_size=self.config.model.data_batch_size,
-                             num_workers=self.config.model.num_workers)
-    dae.train(X_train)
-    dae.save_model()
+    # dae = DAE(config=cfg, metric=css_metric)
+    # dae.train(X_train)
+    # dae.save_model()
 
 
 if __name__ == "__main__":
     _main()
-
-

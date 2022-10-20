@@ -1,6 +1,6 @@
 import pandas as pd
 from omegaconf import DictConfig
-from typing import Tuple
+from typing import Tuple, Optional
 from ..utils.utils import read_csv_file
 from torch.utils.data import Dataset, DataLoader
 from typing import List
@@ -38,27 +38,49 @@ class DAEDataset(Dataset):
         return self.x[index]
 
 
-def get_dae_dataset(X: np.ndarray,
-                    batch_size: int,
-                    num_workers: int) -> Dataset:
-    dataloader = DataLoader(dataset=DAEDataset(X),
-                            batch_size=batch_size,
-                            num_workers=num_workers,
-                            shuffle=True,
-                            pin_memory=True,
-                            drop_last=True)
+class DataContainer():
+    def __init__(self,
+                 df: pd.DataFrame,
+                 df_y: Optional[pd.Series]=None,
+                 len_cat: int=0,
+                 len_num: int=0):
+        """
+        :param df: preprocessed data frame
+        :param len_cat: count of categorical features
+        :param len_num: count of numerical features
+        """
+        self.df = df
+        self.df_y = df_y
+        self.len_cat = len_cat
+        self.len_num = len_num
 
-    return dataloader
+    def get_dae_dataset(self, batch_size, num_workers):
+        cutoff = int(len(self.df) * 0.9)
+        train_x = self.df.iloc[:cutoff].to_numpy()
+        valid_x = self.df.iloc[cutoff:].to_numpy()
+        train_x = DataLoader(dataset=DAEDataset(train_x),
+                             batch_size=batch_size,
+                             num_workers=num_workers,
+                             shuffle=True,
+                             pin_memory=True,
+                             drop_last=True)
+        valid_x = DataLoader(dataset=DAEDataset(valid_x),
+                             batch_size=batch_size,
+                             num_workers=num_workers,
+                             shuffle=False,
+                             pin_memory=True,
+                             drop_last=False)
+        return train_x, valid_x
 
-def get_dataset_with_cat_handler(X: pd.DataFrame,
-                                 cat_list: List[str]) -> (np.ndarray, int, int):
-    num_list = list(set(X.columns) - set(cat_list))
-    encoder = OneHotEncoder(sparse=False)
-    X_cat = encoder.fit_transform(X[cat_list])
-    encoder = StandardScaler()
-    X_num = encoder.fit_transform(X[num_list])
-    X = np.hstack([X_cat, X_num])
-    return X, X_cat.shape[1], X_num.shape[1]
+    def get_dataframe(self):
+        return self.df, self.df_y
+
+    # @property
+    # def len_cat(self): return self.len_cat
+    #
+    # @property
+    # def len_num(self): return self.len_num
+
 
 def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame, pd.Series]:
     feat_list = read_csv_file(config.dataset.feature_list_path)[0]

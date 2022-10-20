@@ -1,0 +1,42 @@
+params:
+  hidden_size: 32
+  emphasis: 0.8
+
+optimizer:
+  init_lr: 0.02
+  lr_gamma: 0.02
+
+schedular:
+  gamma: 0.2
+
+earlystopper:
+  min_delta: 0.0000007
+  patience: 200
+  verbose: 1
+
+hidden_size: 1024
+num_subspaces: 8
+embed_dim: 128
+num_heads: 8
+dropout: 0
+feedforward_dim: 512
+emphasis: 0.75
+mask_loss_weight: 2
+
+noise_ratio:
+  num: 0.25
+  cat: 0.25
+
+batch_size: 512
+num_workers: 64
+iterations: 3000
+
+loss_weight:
+  cat: 0.2
+  num: 0.8
+
+eval_verbose: 1
+
+path: res/models
+name: transformer_dae
+result: transformer_dae.pkl

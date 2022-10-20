@@ -12,18 +12,30 @@ def read_csv_file(file_path):
     return res_list
 
 class AverageMeter(object):
-    def __init__(self):
-        self.reset()
-    def reset(self):
-        self.val, self.avg, self.sum, self.count = 0,0,0,0
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
+    def __init__(self, mv_size=128, init_val=None):
+        self.mv_size = mv_size
+        self.reset(init_val)
+
+    def reset(self, init_val=None):
+        self.val = [] if not init_val else [init_val]
+
+    def update(self, val):
+        self.val.append(val)
+
+    @property
+    def avg(self):
+        return np.mean(self.val[-self.mv_size:])
+
+    @property
+    def overall_avg(self):
+        return np.mean(self.val)
+
 
 class EarlyStopping(object):
+    """Monitoring an metric, flag when to stop training."""
     def __init__(self, mode='min', min_delta=0, percentage=False, patience=10, initial_bad=0, initial_best=np.nan, verbose=0):
+        assert patience > 0, 'patience must be positive integer'
+        assert mode in ['min', 'max'], 'mode must be either min or max'
         self.mode = mode
         self.patience = patience
         self.best = float('inf') if mode == 'min' else float('-inf')
@@ -59,6 +71,10 @@ class EarlyStopping(object):
                 return comparator(new, target)
         return _is_better
 
+    def __repr__(self):
+        return '<EarlyStopping object with: mode - {} - num_bad_epochs - {} - patience - {} - best - {}>'.format(
+            self.mode, self.num_bad_epochs, self.patience, self.best)
+
 class SwapNoiseMasker(object):
     def __init__(self, probas):
         self.probas = torch.from_numpy(np.array(probas))
@@ -68,3 +84,21 @@ class SwapNoiseMasker(object):
         corrupted_X = torch.where(should_swap == 1, X[torch.randperm(X.shape[0])], X)
         mask = (corrupted_X != X).float()
         return corrupted_X, mask
+
+class DictX(dict):
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError as k:
+            raise AttributeError(k)
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError as k:
+            raise AttributeError(k)
+
+    def __repr__(self):
+        return '<DictX ' + dict.__repr__(self) + '>'

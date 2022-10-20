@@ -9,7 +9,7 @@ from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 from tqdm import tqdm
 
-from .base_boosting import ModelResult
+from .base_model import ModelResult
 
 def load_model(config: DictConfig, model_name: str) -> ModelResult:
     """

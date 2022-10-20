@@ -6,7 +6,7 @@ from tqdm import tqdm
 import copy
 from torch.utils.data import Dataset, DataLoader
 from ..utils.utils import SwapNoiseMasker, EarlyStopping, AverageMeter
-from .base_boosting import BaseModel, ModelResult, BaseDAEModel
+from .base_model import BaseModel, ModelResult, BaseDAEModel
 
 class DeepStackDAE(torch.nn.Module):
     def __init__(self,

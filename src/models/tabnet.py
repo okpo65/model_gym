@@ -8,7 +8,7 @@ import torch
 from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.model_selection import StratifiedKFold
 
-from .base_boosting import BaseModel, ModelResult
+from .base_model import BaseModel, ModelResult
 
 class TabNetTrainer(BaseModel):
     def __init__(self,

@@ -13,7 +13,7 @@ import xgboost as xgb
 from catboost import CatBoostClassifier, Pool
 from hydra.utils import get_original_cwd
 
-from .base_boosting import BaseModel
+from .base_model import BaseModel
 
 class LGBMTrainer(BaseModel):
     def __init__(self, **kwargs) -> NoReturn:

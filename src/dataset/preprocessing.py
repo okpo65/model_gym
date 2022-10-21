@@ -22,10 +22,12 @@ class Preprocessor():
     def __init__(self,
                  cfg: DictConfig,
                  X_train: pd.DataFrame,
+                 y_train: Optional[pd.Series]=None,
                  X_test: Optional[pd.DataFrame]=None,
                  cat_features: List[str]=[]):
         self.cfg = cfg
         self.X_train = X_train
+        self.y_train = y_train
         self.X_test = X_test
         self.cat_features = cat_features
         self.num_features = list(set(X_train.columns.tolist()) - set(cat_features))
@@ -47,6 +49,7 @@ class Preprocessor():
         len_train_num = np_train_num.shape[1]
 
         X_train_cont = DataContainer(df=pd.DataFrame(np_train),
+                                     df_y=self.y_train,
                                      len_cat=len_train_cat,
                                      len_num=len_train_num)
         X_test_cont = None

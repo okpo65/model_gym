@@ -6,7 +6,7 @@ from tqdm import tqdm
 import copy
 from torch.utils.data import Dataset, DataLoader
 from ..utils.utils import SwapNoiseMasker, EarlyStopping, AverageMeter
-from .base_model import BaseModel, ModelResult, BaseDAEModel
+from .base_model import BaseDAEModel
 
 class DeepStackDAE(torch.nn.Module):
     def __init__(self,
@@ -278,7 +278,7 @@ class DAE(BaseDAEModel):
         )
         scheduler = torch.optim.lr_scheduler.ExponentialLR(
             optimizer,
-            gamma=self.config.model.optimizer.lr_gamma
+            gamma=self.config.model.scheduler.gamma
         )
         earlystopper = EarlyStopping(mode='min',
                                      min_delta=self.config.model.earlystopper.min_delta,

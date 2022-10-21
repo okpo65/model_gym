@@ -1,24 +1,22 @@
 params:
-  hidden_size: 32
-  bottleneck_size: 10
-  emphasis: 0.8
+  hidden_size: 128
   dropout_ratio: 0.2
 
 optimizer:
-  init_lr: 3e-5
-  lr_gamma: 0.995
+  init_lr: 5e-5
+  l2_reg: 2e-3
 
 scheduler:
   gamma: 0.995
+  patience: 30
+  verbose: 0
+  cooldown: 2
+  min_lr: 1e-7
 
 earlystopper:
   min_delta: 1e-7
   patience: 50
   verbose: 1
-
-noise_ratio:
-  num: 0.25
-  cat: 0.25
 
 batch_size: 512
 num_workers: 64
@@ -26,10 +24,6 @@ iterations: 3000
 
 eval_verbose: 1
 
-loss_weight:
-  cat: 0.2
-  num: 0.8
-
 path: res/models
-name: bottleneck_dae
-result: bottleneck_dae.pkl
+name: mlp
+result: mlp.pkl

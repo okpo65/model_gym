@@ -6,8 +6,8 @@ optimizer:
   init_lr: 0.02
   lr_gamma: 0.02
 
-schedular:
-  gamma: 0.2
+scheduler:
+  gamma: 0.995
 
 earlystopper:
   min_delta: 0.0000007

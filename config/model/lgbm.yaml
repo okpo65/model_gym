@@ -14,7 +14,7 @@ params:
   verbose: -1
 
 path: res/models
-name: 5fold_lgbm_seed_42
+name: lgbm
 result: 5fold_lgbm_seed42.pkl
 working: working
 early_stopping_rounds: 100

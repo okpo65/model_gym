@@ -54,10 +54,15 @@ class DataContainer():
         self.len_cat = len_cat
         self.len_num = len_num
 
+    def _split_dataset(self, _df, cutoff_ratio):
+        cutoff = int(len(_df) * cutoff_ratio)
+        train_data = _df.iloc[:cutoff].to_numpy()
+        valid_data = _df.iloc[cutoff:].to_numpy()
+
+        return train_data, valid_data
+
     def get_dae_dataset(self, batch_size, num_workers):
-        cutoff = int(len(self.df) * 0.9)
-        train_x = self.df.iloc[:cutoff].to_numpy()
-        valid_x = self.df.iloc[cutoff:].to_numpy()
+        train_x, valid_x = self._split_dataset(self.df, 0.9)
         train_x = DataLoader(dataset=DAEDataset(train_x),
                              batch_size=batch_size,
                              num_workers=num_workers,
@@ -71,6 +76,33 @@ class DataContainer():
                              pin_memory=True,
                              drop_last=False)
         return train_x, valid_x
+
+    def get_dl_dataloader_for_training(self, batch_size, num_workers):
+        train_x, valid_x = self._split_dataset(self.df, 0.9)
+        train_y, valid_y = self._split_dataset(self.df_y, 0.9)
+        train_x = DataLoader(dataset=TrainDataset(train_x, train_y),
+                             batch_size=batch_size,
+                             num_workers=num_workers,
+                             shuffle=True,
+                             pin_memory=True,
+                             drop_last=True)
+        valid_x = DataLoader(dataset=TrainDataset(valid_x, valid_y),
+                             batch_size=batch_size,
+                             num_workers=num_workers,
+                             shuffle=False,
+                             pin_memory=True,
+                             drop_last=False)
+        return train_x, valid_x
+
+    def get_dl_dataloader_for_testing(self, batch_size, num_workers):
+        test_x = DataLoader(dataset=TestDataset(self.df.to_numpy()),
+                             batch_size=batch_size,
+                             num_workers=num_workers,
+                             shuffle=False,
+                             pin_memory=True,
+                             drop_last=False)
+
+        return test_x
 
     def get_dataframe(self):
         return self.df, self.df_y

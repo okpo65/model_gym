@@ -5,6 +5,6 @@
 
 defaults:
   - dataset: dataset
-  - model: bottleneck_dae
+  - model: mlp
   - features: features
   - preprocessing: preprocessing

@@ -6,6 +6,7 @@ params:
   loss_function: Logloss
   l2_leaf_reg: 70
 
+name: catboost
 early_stopping_rounds: 500
 path: res/model
 result: catboost

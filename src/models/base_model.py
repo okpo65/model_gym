@@ -98,8 +98,8 @@ class BaseDLModel(metaclass=ABCMeta):
 
     def train(self,
               train_cont: DataContainer):
-        train_dl, valid_dl = train_cont.get_dae_dataset(batch_size=self.config.model.batch_size,
-                                                        num_workers=self.config.model.num_workers)
+        train_dl, valid_dl = train_cont.get_dl_dataloader_for_training(batch_size=self.config.model.batch_size,
+                                                                       num_workers=self.config.model.num_workers)
         len_cat, len_num = train_cont.len_cat, train_cont.len_num
         model = self._train(train_dl, valid_dl, len_cat, len_num)
 

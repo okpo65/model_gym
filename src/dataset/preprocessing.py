@@ -6,6 +6,7 @@ from ..utils.utils import DictX
 from ..utils.constants import JARVIS_NULL_REPLACEMENTS
 from ..dataset.dataset import DataContainer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder, RobustScaler, QuantileTransformer, KBinsDiscretizer, OneHotEncoder
+from ..utils.GaussRankScaler import GaussRankScaler
 
 preprocessor_num_strategy = DictX(
     replace_null='replace_null',
@@ -133,7 +134,8 @@ class Preprocessor():
                                                         output_distribution=scaler_cfg.output_distribution,
                                                         random_state=scaler_cfg.random_state),
             'standard': StandardScaler(),
-            'minmax': MinMaxScaler()
+            'minmax': MinMaxScaler(),
+            'gauss_rank': GaussRankScaler()
         }
         return scaler_list[scaler_cfg.name]
     def _get_bins(self, binning_cfg):

@@ -61,8 +61,8 @@ class BaseDAEModel(metaclass=ABCMeta):
         model = self._train(train_dl, valid_dl, len_cat, len_num)
 
         self.result = ModelResult(
-            oof_preds=np.array(),
-            models=[model],
+            oof_preds=np.array([]),
+            models={"fold_0": model},
             scores={}
         )
         return self.result
@@ -102,11 +102,12 @@ class BaseDLModel(metaclass=ABCMeta):
                                                                        num_workers=self.config.model.num_workers)
         len_cat, len_num = train_cont.len_cat, train_cont.len_num
         model = self._train(train_dl, valid_dl, len_cat, len_num)
-
+        pred = model.predict(valid_dl)
+        scores = self.metric(pred, valid_dl.dataset.y)
         self.result = ModelResult(
-            oof_preds=np.array(),
-            models=[model],
-            scores={}
+            oof_preds=pred,
+            models={"fold_0": model},
+            scores={"scores": scores}
         )
         return self.result
 
@@ -178,14 +179,14 @@ class BaseModel(metaclass=ABCMeta):
                 model.predict(X_valid) if isinstance(model, lgb.Booster) else model.predict(xgb.DMatrix(X_valid)) if isinstance(model, xgb.Booster) else model.predict_proba(X_valid.to_numpy())[:, 1]
             )
             # score
-            score = self.metric(y_valid, oof_preds[valid_idx])
+            score = self.metric(oof_preds[valid_idx], y_valid)
             print(f"fold_metric: {score}")
             scores[f"fold_{fold}"] = score
 
             del X_train, X_valid, y_train, y_valid, model
             gc.collect()
 
-        oof_score = self.metric(train_y, oof_preds)
+        oof_score = self.metric(oof_preds, train_y)
         self.result = ModelResult(
             oof_preds=oof_preds,
             models=models,

@@ -39,4 +39,4 @@ eval_verbose: 1
 
 path: res/models
 name: transformer_dae
-result: transformer_dae.pkl
+result: transformer_dae

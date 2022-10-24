@@ -7,6 +7,7 @@ import copy
 from torch.utils.data import Dataset, DataLoader
 from ..utils.utils import SwapNoiseMasker, EarlyStopping, AverageMeter
 from .base_model import BaseDAEModel
+import wandb
 
 class DeepStackDAE(torch.nn.Module):
     def __init__(self,
@@ -18,9 +19,22 @@ class DeepStackDAE(torch.nn.Module):
 
         post_encoding_input_size = len_cat + len_num
         self.hidden_size = hidden_size
-        self.linear_1 = torch.nn.Linear(in_features=post_encoding_input_size, out_features=self.hidden_size)
-        self.linear_2 = torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size)
-        self.linear_3 = torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size)
+
+        self.layer_1 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=post_encoding_input_size, out_features=self.hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.BatchNorm1d(self.hidden_size)
+        )
+        self.layer_2 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.BatchNorm1d(self.hidden_size)
+        )
+        self.layer_3 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.BatchNorm1d(self.hidden_size)
+        )
         self.linear_4 = torch.nn.Linear(in_features=self.hidden_size, out_features=post_encoding_input_size)
 
         self.len_cat = len_cat
@@ -30,11 +44,11 @@ class DeepStackDAE(torch.nn.Module):
         self.lower_bound = 0
 
     def forward(self, x):
-        act_1 = torch.nn.functional.relu(self.linear_1(x))
-        act_2 = torch.nn.functional.relu(self.linear_2(act_1))
-        act_3 = torch.nn.functional.relu(self.linear_3(act_2))
-        out = self.linear_4(act_3)
-        return act_1, act_2, act_3, out
+        x_1 = self.layer_1(x)
+        x_2 = self.layer_2(x_1)
+        x_3 = self.layer_3(x_2)
+        out = self.linear_4(x_3)
+        return x_1, x_2, x_3, out
 
     def feature(self, x):
         return torch.cat(self.forward(x)[:-1], dim=1)
@@ -231,7 +245,10 @@ class DAE(BaseDAEModel):
     def __init__(self, **kwargs) -> NoReturn:
         super().__init__(**kwargs)
 
-    def _get_model(self, len_cat, len_num):
+    def _get_model(self,
+                   len_cat,
+                   len_num,
+                   device):
         model_name = self.config.model.name
         if model_name == 'deepstack_dae':
             model = DeepStackDAE(
@@ -239,7 +256,7 @@ class DAE(BaseDAEModel):
                 len_num=len_num,
                 hidden_size=self.config.model.params.hidden_size,
                 emphasis=self.config.model.params.emphasis
-            )
+            ).to(device)
         elif model_name == 'bottleneck_dae':
             model = DeepBottleneck(
                 len_cat=len_cat,
@@ -248,7 +265,7 @@ class DAE(BaseDAEModel):
                 bottleneck_size=self.config.model.params.bottleneck_size,
                 dropout_ratio=self.config.model.params.dropout_ratio,
                 emphasis=self.config.model.params.emphasis
-            )
+            ).to(device)
         elif model_name == 'transformer_dae':
             model = TransformerAutoEncoder(
                 len_cat=len_cat,
@@ -261,7 +278,7 @@ class DAE(BaseDAEModel):
                 feedforward_dim=self.config.model.feedforward_dim,
                 emphasis=self.config.model.emphasis,
                 mask_loss_weight=self.config.model.mask_loss_weight
-            )
+            ).to(device)
         return model
 
     def _train(self,
@@ -270,8 +287,11 @@ class DAE(BaseDAEModel):
                len_cat: int,
                len_num: int) -> DeepStackDAE:
 
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # model 가져오기
-        model = self._get_model(len_cat, len_num).cuda()
+        model = self._get_model(len_cat,
+                                len_num,
+                                device)
         optimizer = torch.optim.Adam(
             model.parameters(),
             lr=self.config.model.optimizer.init_lr
@@ -298,7 +318,7 @@ class DAE(BaseDAEModel):
             meter = AverageMeter()
             # train
             for i, x in enumerate(train_dl):
-                x = x.cuda()
+                x = x.to(device)
                 noisy_x, mask = noise_maker.apply(x)
                 optimizer.zero_grad()
                 loss = model.loss(noisy_x,
@@ -310,11 +330,12 @@ class DAE(BaseDAEModel):
                 optimizer.step()
                 meter.update(loss.detach().cpu().numpy())
             train_loss = meter.overall_avg
+            metrics = {"train/train_loss": train_loss}
             # valid
             meter.reset()
             with torch.no_grad():
                 for i, x in enumerate(valid_dl):
-                    x = x.cuda()
+                    x = x.to(device)
                     noisy_x, mask = noise_maker.apply(x)
                     loss = model.loss(noisy_x,
                                       x,
@@ -323,6 +344,8 @@ class DAE(BaseDAEModel):
                                                self.config.model.loss_weight.num])
                     meter.update(loss.detach().cpu().numpy())
             valid_loss = meter.overall_avg
+            val_metrics = {"val/val_loss": valid_loss}
+            wandb.log({**metrics, **val_metrics})
 
             if epoch % self.config.model.eval_verbose == 0:
                 print('\repoch {:4d} - train loss {:6.4f} - valid loss {:6.4f}'.format(epoch, train_loss, valid_loss))

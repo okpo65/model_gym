@@ -7,6 +7,7 @@ import copy
 from torch.utils.data import Dataset, DataLoader
 from ..utils.utils import SwapNoiseMasker, EarlyStopping, AverageMeter
 from .base_model import BaseDLModel
+import wandb
 
 class DeepStackMLP(torch.nn.Module):
     def __init__(self,
@@ -58,6 +59,17 @@ class DeepStackMLP(torch.nn.Module):
         mlp_loss = torch.nn.functional.binary_cross_entropy(x, y)
         return mlp_loss
 
+    def predict(self, test_dl: DataLoader) -> np.ndarray:
+        self.eval()
+        predictions = []
+        with torch.no_grad():
+            for i, x in enumerate(test_dl):
+                x = x.cuda()
+                prediction = self.forward(x)
+                predictions.append(prediction.detach().cpu().numpy())
+        predictions = np.concatenate(predictions)
+        return predictions
+
 class MLP(BaseDLModel):
     def __init__(self, **kwargs) -> NoReturn:
         super().__init__(**kwargs)
@@ -107,17 +119,26 @@ class MLP(BaseDLModel):
                 optimizer.step()
                 meter.update(loss.detach().cpu().numpy())
             train_loss = meter.overall_avg
+            metrics = {"train/train_loss": train_loss}
             # valid
             meter.reset()
+            model.eval()
+            predictions = []
             with torch.no_grad():
                 for i, (x, target) in enumerate(valid_dl):
                     x, target = x.cuda(), target.cuda()
-                    loss = model.loss(model.forward(x), target.unsqueeze(1))
+                    prediction = model.forward(x)
+                    loss = model.loss(prediction, target.unsqueeze(1))
+                    predictions.append(prediction.detach().cpu().numpy())
                     meter.update(loss.detach().cpu().numpy())
+            predictions = np.concatenate(predictions)
             valid_loss = meter.overall_avg
-
+            valid_metric_value = self.metric(predictions, valid_dl.dataset.y)
+            val_metrics = {"val/val_loss": valid_loss,
+                           "val/val_metric": valid_metric_value}
+            wandb.log({**metrics, **val_metrics})
             if epoch % self.config.model.eval_verbose == 0:
-                print('\repoch {:4d} - train loss {:6.4f} - valid loss {:6.4f}'.format(epoch, train_loss, valid_loss))
+                print('\repoch {:4d} - train loss {:6.4f} - valid loss {:6.4f} - valid metric {:4.4f}'.format(epoch, train_loss, valid_loss, valid_metric_value))
 
             scheduler.step(valid_loss)
             # checkpointing

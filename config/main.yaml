@@ -8,3 +8,7 @@ defaults:
   - model: mlp
   - features: features
   - preprocessing: preprocessing
+
+representation:
+  path: res/models
+  result: deepstack_dae

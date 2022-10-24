@@ -1,6 +1,6 @@
 params:
-  hidden_size: 32
-  bottleneck_size: 10
+  hidden_size: 128
+  bottleneck_size: 50
   emphasis: 0.8
   dropout_ratio: 0.2
 
@@ -32,4 +32,4 @@ loss_weight:
 
 path: res/models
 name: bottleneck_dae
-result: bottleneck_dae.pkl
+result: bottleneck_dae

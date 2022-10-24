@@ -1,14 +1,14 @@
 fold: 5
 params:
   learning_rate: 0.001
-  iterations: 30000
-  max_depth: 7
+  iterations: 10000
+#  max_depth: 7
   loss_function: Logloss
-  l2_leaf_reg: 70
+#  l2_leaf_reg: 70
 
 name: xgboost
-early_stopping_rounds: 500
-path: res/model
+early_stopping_rounds: 100
+path: res/models
 result: xgboost
 seed: 42
 verbose: 500

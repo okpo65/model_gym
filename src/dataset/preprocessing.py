@@ -31,10 +31,7 @@ class Preprocessor():
         self.y_train = y_train
         self.X_test = X_test
         self.cat_features = cat_features
-        self.num_features = list(set(X_train.columns.tolist()) - set(cat_features))
-        self.len_cat = len(self.cat_features)
-        self.len_test_cat = len(self.cat_features)
-        self.len_num = len(self.num_features)
+        self.num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
 
     def perform(self) -> Tuple[DataContainer, Optional[DataContainer]]:
         # numerical features preprocessing
@@ -84,17 +81,21 @@ class Preprocessor():
 
     def _perform_cat_feature(self, categorical_key):
         np_train_cat = self.X_train[self.cat_features].to_numpy()
-        np_test_cat = None
+        if self.X_test is not None:
+            np_test_cat = self.X_test[self.cat_features].to_numpy()
+        else:
+            np_test_cat = None
+
         if preprocessor_cat_strategy.one_hot == categorical_key:
             encoder = OneHotEncoder(sparse=False)
             encoder.fit(self.X_train[self.cat_features])
             np_train_cat = encoder.transform(self.X_train[self.cat_features])
             if self.X_test is not None:
                 np_test_cat = encoder.transform(self.X_test[self.cat_features])
-                self.len_test_cat = np_test_cat.shape[0]
 
         if preprocessor_cat_strategy.embedding == categorical_key:
             pass
+
 
         return np_train_cat, np_test_cat
 

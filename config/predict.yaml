@@ -1,8 +1,13 @@
 defaults:
   - dataset: dataset
-  - model: tabnet
+  - model: catboost
   - features: features
+  - preprocessing: preprocessing
 
 output:
-  path: output
-  name: 5fold_tabnet_seed_42.csv
+  path: res/output
+  name: ${model.result}.csv
+
+representation:
+  path: res/models
+  result: deepstack_dae

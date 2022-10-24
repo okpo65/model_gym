@@ -276,8 +276,8 @@ class CSSTask:
         fig, axes = plt.subplots(ncols=1, figsize=(6, 6))
         metric.draw_ks(df['score'], y_test, axes, "all")
 
-def css_metric(y_true: Union[pd.Series, np.ndarray],
-               y_pred: Union[pd.Series, np.ndarray]) -> float:
+def css_metric(y_pred: Union[pd.Series, np.ndarray],
+               y_true: Union[pd.Series, np.ndarray]) -> float:
     return CSSTask().eval_seg_ks(y_pred,
                                  pd.DataFrame({'target':y_true}).reset_index(drop=True),
                                  'target')

@@ -119,16 +119,20 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame, pd.Series]:
     cat_feat_list = read_csv_file(config.dataset.cat_feature_path)[0]
 
     X_train = pd.read_parquet(config.dataset.train)
+    # random shuffle
+    X_train = X_train.sample(frac=1.0).reset_index(drop=True)
     y_train = X_train[config.dataset.target_name]
 
     return X_train[feat_list], y_train
 
-def load_test_data(config: DictConfig):
+def load_test_data(config: DictConfig) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
     feat_list = read_csv_file(config.dataset.feature_list_path)[0]
     cat_feat_list = read_csv_file(config.dataset.cat_feature_path)[0]
 
-    target_name = config.dataset.target_name
+
     X_test = pd.read_parquet(config.dataset.test)
+
+    target_name = config.dataset.target_name
     if target_name in X_test.columns:
         y_test = X_test[target_name]
     else:

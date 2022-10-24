@@ -73,12 +73,13 @@ class CatBoostTrainer(BaseModel):
         model = CatBoostClassifier(
             random_state=self.config.model.seed,
             cat_features=[],
+            task_type='GPU',
+            devices='1',
             **self.config.model.params
         )
         model.fit(
             train_data,
             eval_set=valid_data,
-            early_stopping_rounds=self.config.model.early_stopping_rounds,
             verbose=self.config.model.verbose
         )
         return model

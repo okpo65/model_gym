@@ -47,7 +47,7 @@ def _main(cfg: DictConfig):
                                 y_train,
                                 cat_features=cat_features)
     train_cont, _ = preprocessor.perform()
-
+    print('-------------\n Started Training \n-----------', train_cont.get_dataframe())
     # representation learning
     if 'representation' in cfg.keys():
         model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
@@ -57,6 +57,7 @@ def _main(cfg: DictConfig):
 
     # model training
     model_name = cfg.model.name
+    print('model_name: ', model_name)
     if model_name == __all_model__.lgbm:
         model = LGBMTrainer(config=cfg, metric=css_metric)
     elif model_name == __all_model__.xgboost:

@@ -1,6 +1,9 @@
+
 root: /home/peoplefund/workspace/jihwan-css/CSS
 
+# 12, 1월 train, valid
 train: ${dataset.root}/df_cds_proxy.parquet
+# 12, 1월 test or 2월 전체
 test: ${dataset.root}/df_cds_proxy_2_test.parquet
 
 target_name: target

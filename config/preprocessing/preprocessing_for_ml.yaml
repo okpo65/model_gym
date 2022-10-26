@@ -1,0 +1,14 @@
+numerical:
+  binning:
+    strategy: quantile # uniform, kmeans
+    n_bins: 1000
+
+  clipping:
+    upper_bound: 0.01
+    lower_bound: 0.01
+
+  replace_null: 0
+
+
+
+

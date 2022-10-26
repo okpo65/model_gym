@@ -101,7 +101,6 @@ class DataContainer():
                              shuffle=False,
                              pin_memory=True,
                              drop_last=False)
-
         return test_x
 
     def get_dataframe(self):
@@ -115,8 +114,8 @@ class DataContainer():
 
 
 def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame, pd.Series]:
-    feat_list = read_csv_file(config.dataset.feature_list_path)[0]
-    cat_feat_list = read_csv_file(config.dataset.cat_feature_path)[0]
+    feat_list = [*config.features.total_features]#read_csv_file(config.dataset.feature_list_path)[0]
+    cat_feat_list = [*config.features.cat_features]#read_csv_file(config.dataset.cat_feature_path)[0]
 
     X_train = pd.read_parquet(config.dataset.train)
     # random shuffle
@@ -126,9 +125,8 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame, pd.Series]:
     return X_train[feat_list], y_train
 
 def load_test_data(config: DictConfig) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
-    feat_list = read_csv_file(config.dataset.feature_list_path)[0]
-    cat_feat_list = read_csv_file(config.dataset.cat_feature_path)[0]
-
+    feat_list = [*config.features.total_features]  # read_csv_file(config.dataset.feature_list_path)[0]
+    cat_feat_list = [*config.features.cat_features]  # read_csv_file(config.dataset.cat_feature_path)[0]
 
     X_test = pd.read_parquet(config.dataset.test)
 

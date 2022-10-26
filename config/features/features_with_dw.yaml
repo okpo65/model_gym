@@ -218,6 +218,48 @@ total_features:
   - PE0000045
   - SC0000018
   - SC0000033
+  # DW features
+  - amount_mean
+  - amount_std
+  - amount_max
+  - amount_min
+  - amount_first
+  - amount_last
+  - amount_lag
+  - amount_lag_2
+  - interest_rate_mean
+  - interest_rate_std
+  - interest_rate_max
+  - interest_rate_min
+  - interest_rate_first
+  - interest_rate_last
+  - interest_rate_lag
+  - interest_rate_lag_2
+  - monthly_repayment_amount_mean
+  - monthly_repayment_amount_std
+  - monthly_repayment_amount_max
+  - monthly_repayment_amount_min
+  - monthly_repayment_amount_first
+  - monthly_repayment_amount_last
+  - monthly_repayment_amount_lag
+  - monthly_repayment_amount_lag_2
+  - opening_date_days_mean
+  - opening_date_days_std
+  - opening_date_days_max
+  - opening_date_days_min
+  - opening_date_days_first
+  - opening_date_days_last
+  - opening_date_days_lag
+  - opening_date_days_lag_2
+  - total_nice_46_count
+  - organization_name_encoded_first
+  - organization_name_encoded_last
+  - detailed_loan_type_encoded_first
+  - detailed_loan_type_encoded_last
+  - repayment_type_encoded_first
+  - repayment_type_encoded_last
+  - financial_sector_group_encoded_first
+  - financial_sector_group_encoded_last
 
 cat_features:
   - BS0000115
@@ -227,3 +269,11 @@ cat_features:
   - LE0000004
   - LS0000034
   - LS0000163
+  - organization_name_encoded_first
+  - organization_name_encoded_last
+  - detailed_loan_type_encoded_first
+  - detailed_loan_type_encoded_last
+  - repayment_type_encoded_first
+  - repayment_type_encoded_last
+  - financial_sector_group_encoded_first
+  - financial_sector_group_encoded_last

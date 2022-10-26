@@ -26,4 +26,4 @@ eval_verbose: 1
 
 path: res/models
 name: mlp
-result: mlp_with_dae
+result: mlp_with_deepstack_dw

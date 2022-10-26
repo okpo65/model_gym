@@ -34,7 +34,7 @@ def _main(cfg: DictConfig):
     # data load
     X_train, y_train = load_train_data(cfg)
     X_test, y_test = load_test_data(cfg)
-
+    print("results!", results)
     # preprocessing
     cat_features = [*cfg.features.cat_features]
     preprocessor = Preprocessor(cfg.preprocessing,

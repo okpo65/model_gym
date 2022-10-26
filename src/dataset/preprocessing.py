@@ -87,7 +87,7 @@ class Preprocessor():
             np_test_cat = None
 
         if preprocessor_cat_strategy.one_hot == categorical_key:
-            encoder = OneHotEncoder(sparse=False)
+            encoder = OneHotEncoder(sparse=False, handle_unknown = 'ignore')
             encoder.fit(self.X_train[self.cat_features])
             np_train_cat = encoder.transform(self.X_train[self.cat_features])
             if self.X_test is not None:

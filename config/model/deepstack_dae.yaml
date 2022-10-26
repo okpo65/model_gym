@@ -1,5 +1,5 @@
 params:
-  hidden_size: 300
+  hidden_size: 500
   emphasis: 0.8
 
 optimizer:
@@ -30,4 +30,4 @@ loss_weight:
 
 path: res/models
 name: deepstack_dae
-result: deepstack_dae
+result: deepstack_dae_with_dw

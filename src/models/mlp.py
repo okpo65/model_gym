@@ -64,10 +64,12 @@ class DeepStackMLP(torch.nn.Module):
         predictions = []
         with torch.no_grad():
             for i, x in enumerate(test_dl):
+                if isinstance(x, list):
+                    x = x[0]
                 x = x.cuda()
                 prediction = self.forward(x)
                 predictions.append(prediction.detach().cpu().numpy())
-        predictions = np.concatenate(predictions)
+        predictions = np.concatenate(predictions).reshape(-1)
         return predictions
 
 class MLP(BaseDLModel):

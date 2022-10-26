@@ -11,6 +11,6 @@ params:
 name: catboost
 
 path: res/models
-result: catboost_raw_dae
+result: catboost_raw_dw
 seed: 42
 verbose: 500

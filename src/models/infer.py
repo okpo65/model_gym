@@ -60,7 +60,7 @@ def inference_mlp(result: ModelResult,
     preds_proba = np.zeros((test_dl.dataset.x.shape[0],))
     for model in tqdm(result.models.values(), total=folds):
         preds_proba += (
-            model.predict(test_dl).reshape(-1) / folds
+            model.predict(test_dl) / folds
         )
     assert len(preds_proba) == len(test_dl.dataset.x)
     return preds_proba

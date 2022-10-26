@@ -1,0 +1,10 @@
+root: /home/peoplefund/workspace/jihwan-css/CSS
+
+# 12, 1월 train, valid + DW 대출 정보
+train: ${dataset.root}/df_cds_proxy_with_dw.parquet
+# 12, 1월 test or 2월 전체
+test: ${dataset.root}/df_cds_proxy_test_2_with_dw.parquet
+
+target_name: target
+
+seed: 42

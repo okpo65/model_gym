@@ -23,13 +23,17 @@ __all_model__ = DictX(
     transformer_dae='transformer_dae',
     tabnet='tabnet'
 )
+representation_key = 'representation'
 
 @hydra.main(config_path="config/", config_name='predict', version_base='1.2.0')
 def _main(cfg: DictConfig):
 
-    path = Path(get_original_cwd())/ cfg.model.path / cfg.model.result
+
+    """
+    model load
+    """
+    path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
     model_name = cfg.model.name
-    # model load
     results = load_model(cfg, path)
     # data load
     X_train, y_train = load_train_data(cfg)
@@ -47,7 +51,7 @@ def _main(cfg: DictConfig):
 
     train_cont, test_cont = preprocessor.perform()
     # representation learning
-    if 'representation' in cfg.keys():
+    if representation_key in cfg.keys():
         model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
         # model load
         dae_results = load_model(cfg, model_path)

@@ -61,7 +61,7 @@ class DataContainer():
 
         return train_data, valid_data
 
-    def get_dae_dataset(self, batch_size, num_workers):
+    def get_dae_dataloader(self, batch_size, num_workers):
         train_x, valid_x = self._split_dataset(self.df, 0.9)
         train_x = DataLoader(dataset=DAEDataset(train_x),
                              batch_size=batch_size,
@@ -77,9 +77,44 @@ class DataContainer():
                              drop_last=False)
         return train_x, valid_x
 
-    def get_dl_dataloader_for_training(self, batch_size, num_workers):
-        train_x, valid_x = self._split_dataset(self.df, 0.9)
-        train_y, valid_y = self._split_dataset(self.df_y, 0.9)
+    def get_train_dataloader(self, batch_size, num_workers):
+        x_dl = DataLoader(dataset=TrainDataset(self.df, self.df_y),
+                          batch_size=batch_size,
+                          num_workers=num_workers,
+                          shuffle=True,
+                          pin_memory=True,
+                          drop_last=True)
+        return x_dl
+
+    def get_valid_dataloader(self, batch_size, num_workers):
+        x_dl = DataLoader(dataset=TrainDataset(self.df, self.df_y),
+                          batch_size=batch_size,
+                          num_workers=num_workers,
+                          shuffle=False,
+                          pin_memory=True,
+                          drop_last=False)
+        return x_dl
+
+    def get_test_dataloader(self, batch_size, num_workers):
+        test_x = DataLoader(dataset=TestDataset(self.df.to_numpy()),
+                             batch_size=batch_size,
+                             num_workers=num_workers,
+                             shuffle=False,
+                             pin_memory=True,
+                             drop_last=False)
+        return test_x
+
+    def get_dataframe(self):
+        return self.df, self.df_y
+
+    def get_splited_dataframe(self, split_ratio=0.9):
+        train_x, valid_x = self._split_dataset(self.df, split_ratio)
+        train_y, valid_y = self._split_dataset(self.df_y, split_ratio)
+        return train_x, valid_x, train_y, valid_y
+
+    def get_splited_dataloader(self, batch_size, num_workers, split_ratio=0.9):
+        train_x, valid_x, train_y, valid_y = self.get_split_dataframe(split_ratio)
+
         train_x = DataLoader(dataset=TrainDataset(train_x, train_y),
                              batch_size=batch_size,
                              num_workers=num_workers,
@@ -94,28 +129,8 @@ class DataContainer():
                              drop_last=False)
         return train_x, valid_x
 
-    def get_dl_dataloader_for_testing(self, batch_size, num_workers):
-        test_x = DataLoader(dataset=TestDataset(self.df.to_numpy()),
-                             batch_size=batch_size,
-                             num_workers=num_workers,
-                             shuffle=False,
-                             pin_memory=True,
-                             drop_last=False)
-        return test_x
-
-    def get_dataframe(self):
-        return self.df, self.df_y
-
-    # @property
-    # def len_cat(self): return self.len_cat
-    #
-    # @property
-    # def len_num(self): return self.len_num
-
-
 def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame, pd.Series]:
-    feat_list = [*config.features.total_features]#read_csv_file(config.dataset.feature_list_path)[0]
-    cat_feat_list = [*config.features.cat_features]#read_csv_file(config.dataset.cat_feature_path)[0]
+    feat_list = [*config.features.total_features]
 
     X_train = pd.read_parquet(config.dataset.train)
     # random shuffle
@@ -125,8 +140,7 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame, pd.Series]:
     return X_train[feat_list], y_train
 
 def load_test_data(config: DictConfig) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
-    feat_list = [*config.features.total_features]  # read_csv_file(config.dataset.feature_list_path)[0]
-    cat_feat_list = [*config.features.cat_features]  # read_csv_file(config.dataset.cat_feature_path)[0]
+    feat_list = [*config.features.total_features]
 
     X_test = pd.read_parquet(config.dataset.test)
 

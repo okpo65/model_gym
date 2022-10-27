@@ -1,0 +1,23 @@
+#defaults:
+#  - dataset: dataset_with_dw
+#  - model: mlp
+#  - features: features_with_dw
+#  - preprocessing: preprocessing_for_ml
+
+defaults:
+  - dataset: dataset
+  - model: deepstack_dae
+  - features: features
+  - preprocessing: preprocessing
+
+output:
+  before_path: ${dataset.root}/df_cds_test_reconstructed_before.parquet
+  after_path: ${dataset.root}/df_cds_test_reconstructed_after.parquet
+
+#  path: res/output
+#  name: ${model.result}_test_2.csv
+
+
+#representation:
+#  path: res/models
+#  result: deepstack_dae

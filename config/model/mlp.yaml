@@ -1,3 +1,4 @@
+folds: 5
 params:
   hidden_size: 128
   dropout_ratio: 0.2
@@ -20,10 +21,10 @@ earlystopper:
 
 batch_size: 512
 num_workers: 64
-iterations: 3000
+iterations: 5
 
 eval_verbose: 1
 
 path: res/models
 name: mlp
-result: mlp_with_deepstack_dw
+result: mlp_tmp

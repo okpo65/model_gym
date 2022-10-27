@@ -25,13 +25,14 @@ class Preprocessor():
                  X_train: pd.DataFrame,
                  y_train: Optional[pd.Series]=None,
                  X_test: Optional[pd.DataFrame]=None,
+                 num_features: List[str]=[],
                  cat_features: List[str]=[]):
         self.cfg = cfg
         self.X_train = X_train
         self.y_train = y_train
         self.X_test = X_test
         self.cat_features = cat_features
-        self.num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
+        self.num_features = num_features
 
     def perform(self) -> Tuple[DataContainer, Optional[DataContainer]]:
         # numerical features preprocessing
@@ -96,7 +97,6 @@ class Preprocessor():
         if preprocessor_cat_strategy.embedding == categorical_key:
             pass
 
-
         return np_train_cat, np_test_cat
 
     def _fit_transform_scaler(self, scaler):
@@ -119,8 +119,6 @@ class Preprocessor():
             self.X_train[num_feat] = np.clip(self.X_train[num_feat].to_numpy(), lower_bound_list[num_feat], upper_bound_list[num_feat])
             if self.X_test is not None:
                 self.X_test[num_feat] = np.clip(self.X_test[num_feat].to_numpy(), lower_bound_list[num_feat], upper_bound_list[num_feat])
-
-
 
     def _replace_null_value(self, replace_value):
         for col in self.X_train.columns:

@@ -53,6 +53,9 @@ class DeepStackDAE(torch.nn.Module):
     def feature(self, x):
         return torch.cat(self.forward(x)[:-1], dim=1)
 
+    def reconstructed_feature(self, x):
+        return self.forward(x)[-1]
+
     def split(self, t):
         return torch.split(t, [self.len_cat, self.len_num], dim=1)
 
@@ -131,6 +134,9 @@ class DeepBottleneck(torch.nn.Module):
 
     def feature(self, x):
         return self.forward_pass(x)[0]
+
+    def reconstructed_feature(self, x):
+        return self.forward(x)[-1]
 
     def split(self, t):
         return torch.split(t, [self.len_cat, self.len_num], dim=1)
@@ -225,6 +231,10 @@ class TransformerAutoEncoder(torch.nn.Module):
     def feature(self, x):
         attn_outs, _ = self.forward(x)
         return torch.cat([self.combine(x) for x in attn_outs], dim=1)
+
+    def reconstructed_feature(self, x):
+        attn_outs, _ = self.forward(x)
+        return torch.cat(attn_outs, dim=1)
 
     def loss(self, x, y, mask, weights=[3, 14], reduction='mean'):
         _, (reconstruction, predicted_mask) = self.forward(x)

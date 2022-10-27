@@ -54,9 +54,15 @@ class BaseDAEModel(metaclass=ABCMeta):
 
     def train(self,
               train_cont: DataContainer) -> ModelResult:
-        train_dl, valid_dl = train_cont.get_dae_dataset(batch_size=self.config.model.batch_size,
-                                                        num_workers=self.config.model.num_workers)
+        train_dl, valid_dl = train_cont.get_dae_dataloader(batch_size=self.config.model.batch_size,
+                                                           num_workers=self.config.dataset.num_workers)
         len_cat, len_num = train_cont.len_cat, train_cont.len_num
+
+        wandb.init(project='model_gym',
+                   group=f"{self.config.model.result}",
+                   job_type=f'train_{0}',
+                   config=self.config.model,
+                   reinit=True)
 
         model = self._train(train_dl, valid_dl, len_cat, len_num)
 
@@ -98,16 +104,101 @@ class BaseDLModel(metaclass=ABCMeta):
 
     def train(self,
               train_cont: DataContainer):
-        train_dl, valid_dl = train_cont.get_dl_dataloader_for_training(batch_size=self.config.model.batch_size,
-                                                                       num_workers=self.config.model.num_workers)
+
+        models = dict()
+        scores = dict()
+        folds = self.config.model.folds
+        seed = self.config.dataset.seed
+
+        train_x, train_y = train_cont.get_dataframe()
         len_cat, len_num = train_cont.len_cat, train_cont.len_num
-        model = self._train(train_dl, valid_dl, len_cat, len_num)
-        pred = model.predict(valid_dl)
-        scores = self.metric(pred, valid_dl.dataset.y)
+
+        if folds == 1:
+            train_dl, valid_dl = train_cont.get_splited_dataloader(batch_size=self.config.model.batch_size,
+                                                                   num_workers=self.config.dataset.num_workers)
+
+            wandb.init(project='model_gym',
+                       group=f"{self.config.model.result}",
+                       job_type=f'train_{0}',
+                       config=self.config.model,
+                       reinit=True)
+
+            model = self._train(train_dl=train_dl,
+                                valid_dl=valid_dl,
+                                len_cat=len_cat,
+                                len_num=len_num)
+            models["fold_0"] = model
+            pred = model.predict(valid_dl)
+            scores = self.metric(pred, valid_dl.dataset.y)
+            print(f"KS: {scores}")
+            self.result = ModelResult(
+                oof_preds=np.array([]),
+                models=models,
+                scores={"scores": scores}
+            )
+            return self.result
+
+        str_kf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=seed)
+        splits = str_kf.split(train_x, train_y)
+        oof_preds = np.zeros(len(train_x))
+
+        for fold, (train_idx, valid_idx) in enumerate(splits, 1):
+            self._max_score = 0.0
+            self._num_fold_iter = fold
+
+            X_train, y_train = train_x.iloc[train_idx], train_y.iloc[train_idx]
+            X_valid, y_valid = train_x.iloc[valid_idx], train_y.iloc[valid_idx]
+
+            X_train = X_train.reset_index(drop=True).to_numpy()
+            y_train = y_train.reset_index(drop=True).to_numpy()
+            X_valid = X_valid.reset_index(drop=True).to_numpy()
+            y_valid = y_valid.reset_index(drop=True).to_numpy()
+
+            # model
+            train_split_cont = DataContainer(df=X_train,
+                                     df_y=y_train,
+                                     len_cat=len_cat,
+                                     len_num=len_num)
+            train_dl = train_split_cont.get_train_dataloader(batch_size=self.config.model.batch_size,
+                                                             num_workers=self.config.dataset.num_workers)
+            valid_split_cont = DataContainer(df=X_valid,
+                                     df_y=y_valid,
+                                     len_cat=len_cat,
+                                     len_num=len_num)
+            valid_dl = valid_split_cont.get_valid_dataloader(batch_size=self.config.model.batch_size,
+                                                             num_workers=self.config.dataset.num_workers)
+
+
+            wandb.init(project='model_gym',
+                       group=f"{self.config.model.result}",
+                       job_type=f'train_{fold}',
+                       config=self.config.model,
+                       reinit=True)
+
+            model = self._train(train_dl=train_dl,
+                                valid_dl=valid_dl,
+                                len_cat=len_cat,
+                                len_num=len_num)
+            models[f"fold_{fold}"] = model
+
+            # validation
+            oof_preds[valid_idx] = (
+                model.predict(valid_dl) / folds
+            )
+            print("oof_preds!!", oof_preds)
+            # score
+            score = self.metric(oof_preds[valid_idx], y_valid)
+            print(f"fold_metric: {score}")
+            scores[f"fold_{fold}"] = score
+
+            del X_train, X_valid, y_train, y_valid, train_dl, valid_dl, model
+            gc.collect()
+
+        oof_score = self.metric(oof_preds, train_y)
         self.result = ModelResult(
-            oof_preds=pred,
-            models={"fold_0": model},
-            scores={"scores": scores}
+            oof_preds=oof_preds,
+            models=models,
+            scores={"oof_score": oof_score, "KFold_scores": scores}
         )
         return self.result
 
@@ -152,10 +243,29 @@ class BaseModel(metaclass=ABCMeta):
         """
         models = dict()
         scores = dict()
-        folds = self.config.model.fold
+        folds = self.config.model.folds
         seed = self.config.dataset.seed
 
         train_x, train_y = train_cont.get_dataframe()
+
+        if folds == 1:
+            X_train, X_valid, y_train, y_valid = train_cont.get_splited_dataframe()
+            model = self._train(X_train, y_train, X_valid, y_valid)
+            models[f"fold_0"] = model
+            # validation
+            pred = model.predict(X_valid) if isinstance(model, lgb.Booster) else model.predict(
+                    xgb.DMatrix(X_valid)) if isinstance(model, xgb.Booster) else model.predict_proba(
+                    X_valid)[:, 1]
+
+            # score
+            scores = self.metric(pred, y_valid)
+            print(f"KS: {scores}")
+            self.result = ModelResult(
+                oof_preds=np.array([]),
+                models=models,
+                scores={"scores": scores}
+            )
+            return self.result
 
         str_kf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=seed)
         splits = str_kf.split(train_x, train_y)
@@ -168,7 +278,6 @@ class BaseModel(metaclass=ABCMeta):
             X_train, y_train = train_x.iloc[train_idx], train_y.iloc[train_idx]
             X_valid, y_valid = train_x.iloc[valid_idx], train_y.iloc[valid_idx]
 
-            # need wandb logger
 
             # model
             model = self._train(X_train, y_train, X_valid, y_valid)

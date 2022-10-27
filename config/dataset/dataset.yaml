@@ -10,5 +10,4 @@ target_name: target
 
 seed: 42
 
-feature_list_path: ${dataset.root}/feature/css_train_feat_list.csv
-cat_feature_path: ${dataset.root}/feature/css_categorical_list.csv
+num_workers: 48

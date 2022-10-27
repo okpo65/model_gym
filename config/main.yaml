@@ -4,10 +4,10 @@
 #  output_subdir: null
 
 defaults:
-  - dataset: dataset_with_dw
-  - model: catboost
-  - features: features_with_dw
-  - preprocessing: preprocessing_for_ml
+  - dataset: dataset
+  - model: mlp
+  - features: features
+  - preprocessing: preprocessing
 
 #representation:
 #  path: res/models
@@ -21,4 +21,4 @@ defaults:
 #
 #representation:
 #  path: res/models
-#  result: deepstack_dae_with_dw
+#  result: deepstack_dae

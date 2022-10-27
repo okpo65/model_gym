@@ -87,6 +87,26 @@ def inference_dae(result: ModelResult,
     return new_test_cont
 
 
+def inference_dae_reconstruction(result: ModelResult,
+                                 train_cont: DataContainer) -> DataContainer:
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    test_dl = train_cont.get_dl_dataloader_for_testing(batch_size=512,
+                                                       num_workers=64)
+    model = list(result.models.values())[0]
+
+    torch_test = []
+    for i, x in enumerate(test_dl):
+        x = x.to(device)
+        with torch.no_grad():
+            x = model.reconstructed_feature(x)
+        torch_test.append(x)
+    torch_test = torch.cat(torch_test, dim=0)
+
+    new_test_cont = DataContainer(df=pd.DataFrame(torch_test.detach().cpu().numpy()),
+                                  df_y=train_cont.df_y,
+                                  len_cat=train_cont.len_cat,
+                                  len_num=train_cont.len_num)
+    return new_test_cont
 
 
 

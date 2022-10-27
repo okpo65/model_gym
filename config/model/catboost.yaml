@@ -1,4 +1,4 @@
-fold: 5
+folds: 1
 params:
 #  learning_rate: 0.001
   iterations: 10000
@@ -11,6 +11,6 @@ params:
 name: catboost
 
 path: res/models
-result: catboost_raw_dw
+result: catboost_tmp
 seed: 42
 verbose: 500

@@ -10,7 +10,7 @@ from sklearn.metrics import r2_score
 from pytorch_tabnet.metrics import Metric
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+from math import exp
 
 class AmexMetric(Metric):
     def __init__(self):
@@ -281,3 +281,17 @@ def css_metric(y_pred: Union[pd.Series, np.ndarray],
     return CSSTask().eval_seg_ks(y_pred,
                                  pd.DataFrame({'target':y_true}).reset_index(drop=True),
                                  'target')
+
+def reconstruction_confidence(df_before,
+                              df_after,
+                              cat_features,
+                              num_features):
+    df = pd.DataFrame()
+    for num_feat in num_features:
+        df_v = df_before[num_feat] - df_after[num_feat]
+        df[num_feat] = df_v.apply(lambda x: 1 - exp(-pow(x, 2)))
+
+    return df
+
+
+

@@ -19,7 +19,7 @@ noise_ratio:
   cat: 0.25
 
 batch_size: 512
-num_workers: 64
+num_workers: ${dataset.num_workers}
 iterations: 3000
 
 eval_verbose: 1
@@ -30,4 +30,4 @@ loss_weight:
 
 path: res/models
 name: deepstack_dae
-result: deepstack_dae_with_dw
+result: deepstack_dae_1500_dw

@@ -1,7 +1,13 @@
 numerical:
-  binning:
-    strategy: quantile # uniform, kmeans
-    n_bins: 1000
+  scaler:
+    name: quantile_transformer # standard, minmax, quantil_transformer, label
+    n_quantiles: 1000
+    random_state: 42
+    output_distribution: uniform # uniform, normal
+
+#  binning:
+#    strategy: quantile # uniform, kmeans
+#    n_bins: 1000
 
   clipping:
     upper_bound: 0.01

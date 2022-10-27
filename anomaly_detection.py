@@ -7,8 +7,8 @@ from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 
 from src.dataset.dataset import load_train_data, load_test_data
-from src.models.infer import inference, load_model, inference_mlp, inference_dae
-from src.evaluation.evaluation import css_metric
+from src.models.infer import inference, load_model, inference_mlp, inference_dae, inference_dae_reconstruction
+from src.evaluation.evaluation import css_metric, reconstruction_confidence
 from src.dataset.preprocessing import Preprocessor
 from src.utils.utils import DictX
 # from utils.utils import seed_everything
@@ -24,11 +24,11 @@ __all_model__ = DictX(
     tabnet='tabnet'
 )
 
-@hydra.main(config_path="config/", config_name='predict', version_base='1.2.0')
+@hydra.main(config_path="config/", config_name='anomaly_detection', version_base='1.2.0')
 def _main(cfg: DictConfig):
 
     path = Path(get_original_cwd())/ cfg.model.path / cfg.model.result
-    model_name = cfg.model.name
+
     # model load
     results = load_model(cfg, path)
     # data load
@@ -46,29 +46,24 @@ def _main(cfg: DictConfig):
                                 cat_features=cat_features)
 
     train_cont, test_cont = preprocessor.perform()
-    # representation learning
-    if 'representation' in cfg.keys():
-        model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
-        # model load
-        dae_results = load_model(cfg, model_path)
-        test_cont = inference_dae(dae_results, test_cont)
 
-    # infer test
-    if model_name == __all_model__.mlp:
-        test_dl = test_cont.get_dl_dataloader_for_testing(batch_size=cfg.model.batch_size,
-                                                          num_workers=cfg.model.num_workers)
-        preds = inference_mlp(results, test_dl)
-    else:
-        X_test, _ = test_cont.get_dataframe()
-        preds = inference(results, X_test)
+    model_path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
+    # model load
+    dae_results = load_model(cfg, model_path)
+    df_before, _ = test_cont.get_dataframe()
+    df_before.columns = [f"{c}_cat" for c in df_before.columns.tolist()[:test_cont.len_cat]] + [f"{c}" for c in num_features]
+    df_before.to_parquet(cfg.output.before_path)
+    # dae reconstruction
+    test_cont = inference_dae_reconstruction(dae_results, test_cont)
+    df_after, _ = test_cont.get_dataframe()
+    df_after.columns = [f"{c}_cat" for c in df_after.columns.tolist()[:test_cont.len_cat]] + [f"{c}" for c in num_features]
+    df_after.to_parquet(cfg.output.after_path)
 
-    # 결과 저장
-    model_path = (
-        Path(get_original_cwd()) / cfg.output.path / cfg.output.name
-    )
-    pd.DataFrame(preds).to_csv(model_path)
-
-    print(f"KS: {css_metric(preds, y_test)}")
+    df_confidence = reconstruction_confidence(df_before,
+                                              df_after,
+                                              cat_features=cat_features,
+                                              num_features=num_features)
+    df_confidence.to_parquet('../CSS/df_confidence.parquet')
 
 if __name__ == "__main__":
     _main()

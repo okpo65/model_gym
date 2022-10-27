@@ -2,7 +2,7 @@ import logging
 import warnings
 from pathlib import Path
 from typing import Tuple
-
+import torch
 import pandas as pd
 from hydra.utils import get_original_cwd
 from src.dataset.dataset import load_train_data, load_test_data, DataContainer
@@ -34,17 +34,19 @@ __all_model__ = DictX(
 def _main(cfg: DictConfig):
     # wandb
     wandb.login(key=WANDB_KEY)
-    wandb.init(project='model_gym',
-               name=cfg.model.result,
-               reinit=False)
+    # wandb.init(project='model_gym',
+    #            name=cfg.model.result,
+    #            reinit=True)
     # get dataset
     X_train, y_train = load_train_data(cfg)
 
     # preprocessing
     cat_features = [*cfg.features.cat_features]
+    num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
     preprocessor = Preprocessor(cfg.preprocessing,
                                 X_train,
                                 y_train,
+                                num_features=num_features,
                                 cat_features=cat_features)
     train_cont, _ = preprocessor.perform()
     print('-------------\n Started Training \n-----------', train_cont.get_dataframe())
@@ -54,8 +56,8 @@ def _main(cfg: DictConfig):
         # model load
         results = load_model(cfg, model_path)
         train_cont = inference_dae(results, train_cont)
-
     # model training
+    torch.set_num_threads(cfg.dataset.num_workers)
     model_name = cfg.model.name
     print('model_name: ', model_name)
     if model_name == __all_model__.lgbm:

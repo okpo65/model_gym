@@ -139,6 +139,7 @@ class MLP(BaseDLModel):
             val_metrics = {"val/val_loss": valid_loss,
                            "val/val_metric": valid_metric_value}
             wandb.log({**metrics, **val_metrics})
+
             if epoch % self.config.model.eval_verbose == 0:
                 print('\repoch {:4d} - train loss {:6.4f} - valid loss {:6.4f} - valid metric {:4.4f}'.format(epoch, train_loss, valid_loss, valid_metric_value))
 
@@ -150,5 +151,6 @@ class MLP(BaseDLModel):
             # early stopping
             if earlystopper.step(valid_loss):
                 break
+
 
         return best_model

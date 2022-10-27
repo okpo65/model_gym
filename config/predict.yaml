@@ -6,15 +6,15 @@
 
 
 defaults:
-  - dataset: dataset_with_dw
-  - model: mlp
-  - features: features_with_dw
-  - preprocessing: preprocessing
+  - dataset: dataset
+  - model: catboost
+  - features: features
+  - preprocessing: preprocessing_for_ml
 
 output:
   path: res/output
-  name: ${model.result}.csv
+  name: ${model.result}_test_2.csv
 
 #representation:
 #  path: res/models
-#  result: bottleneck_dae_with_dw #deepstack_dae_with_dw
+#  result: deepstack_dae

@@ -35,6 +35,8 @@ def inference(result: ModelResult,
     :param result: ModelResult Object
     :param X_test: dataframe
     :return: predict probabilities for each class
+
+
     """
 
     folds = len(result.models)
@@ -68,8 +70,8 @@ def inference_mlp(result: ModelResult,
 def inference_dae(result: ModelResult,
                   train_cont: DataContainer) -> DataContainer:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    test_dl = train_cont.get_dl_dataloader_for_testing(batch_size=512,
-                                                       num_workers=64)
+    test_dl = train_cont.get_test_dataloader(batch_size=512,
+                                             num_workers=64)
     model = list(result.models.values())[0]
 
     torch_test = []
@@ -90,8 +92,8 @@ def inference_dae(result: ModelResult,
 def inference_dae_reconstruction(result: ModelResult,
                                  train_cont: DataContainer) -> DataContainer:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    test_dl = train_cont.get_dl_dataloader_for_testing(batch_size=512,
-                                                       num_workers=64)
+    test_dl = train_cont.get_test_dataloader(batch_size=512,
+                                             num_workers=64)
     model = list(result.models.values())[0]
 
     torch_test = []

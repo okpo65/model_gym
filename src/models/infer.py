@@ -36,7 +36,7 @@ def inference(result: ModelResult,
     :param X_test: dataframe
     :return: predict probabilities for each class
 
-
+    inference for boosting model
     """
 
     folds = len(result.models)
@@ -58,6 +58,13 @@ def inference(result: ModelResult,
 
 def inference_mlp(result: ModelResult,
                   test_dl: DataLoader) -> np.ndarray:
+    """
+    :param result: ModelResult Object
+    :param test_dl: test dataloader
+    :return: predict probabilities for each class
+
+    inference for mlp model
+    """
     folds = len(result.models)
     preds_proba = np.zeros((test_dl.dataset.x.shape[0],))
     for model in tqdm(result.models.values(), total=folds):
@@ -69,6 +76,11 @@ def inference_mlp(result: ModelResult,
 
 def inference_dae(result: ModelResult,
                   train_cont: DataContainer) -> DataContainer:
+    """
+    :param result: ModelResult Object
+    :param train_cont: dataloader to be DAE representation features
+    :return: new dataContainer with representation features
+    """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     test_dl = train_cont.get_test_dataloader(batch_size=512,
                                              num_workers=64)
@@ -91,6 +103,11 @@ def inference_dae(result: ModelResult,
 
 def inference_dae_reconstruction(result: ModelResult,
                                  train_cont: DataContainer) -> DataContainer:
+    """
+    :param result: ModelResult Object
+    :param train_cont: dataloader to be DAE reconstructed data
+    :return: new dataContainer with reconstructed data
+    """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     test_dl = train_cont.get_test_dataloader(batch_size=512,
                                              num_workers=64)

@@ -19,6 +19,7 @@ preprocessor_cat_strategy = DictX(
     one_hot='one_hot',
     embedding='embedding'
 )
+
 class Preprocessor():
     def __init__(self,
                  cfg: DictConfig,

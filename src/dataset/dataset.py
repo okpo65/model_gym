@@ -48,6 +48,8 @@ class DataContainer():
         :param df: preprocessed data frame
         :param len_cat: count of categorical features
         :param len_num: count of numerical features
+
+        Overall Data Repository with feature information
         """
         self.df = df
         self.df_y = df_y
@@ -130,6 +132,10 @@ class DataContainer():
         return train_x, valid_x
 
 def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame, pd.Series]:
+    """
+    :param config: dataset config
+    :return: shuffled train dataset
+    """
     feat_list = [*config.features.total_features]
 
     X_train = pd.read_parquet(config.dataset.train)
@@ -140,6 +146,10 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame, pd.Series]:
     return X_train[feat_list], y_train
 
 def load_test_data(config: DictConfig) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
+    """
+    :param config: dataset config
+    :return: test dataset
+    """
     feat_list = [*config.features.total_features]
 
     X_test = pd.read_parquet(config.dataset.test)

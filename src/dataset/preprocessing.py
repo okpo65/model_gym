@@ -5,9 +5,11 @@ from typing import Optional, List, Tuple
 from ..utils.utils import DictX
 from ..utils.constants import JARVIS_NULL_REPLACEMENTS
 from ..dataset.dataset import DataContainer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder, RobustScaler, QuantileTransformer, KBinsDiscretizer, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, QuantileTransformer, KBinsDiscretizer, OneHotEncoder
 from ..utils.GaussRankScaler import GaussRankScaler
 
+
+# available numerical preprocessing strategy
 preprocessor_num_strategy = DictX(
     replace_null='replace_null',
     clipping='clipping',
@@ -15,12 +17,18 @@ preprocessor_num_strategy = DictX(
     binning='binning'
 )
 
+# available categorical preprocessing strategy
 preprocessor_cat_strategy = DictX(
     one_hot='one_hot',
     embedding='embedding'
 )
 
-class Preprocessor():
+class Preprocessor(object):
+    """
+    Preprocessing for train or test data
+    Train dataset Preprocessing: based on its own dataset
+    Test dataset Preprocessing: based on train dataset
+    """
     def __init__(self,
                  cfg: DictConfig,
                  X_train: pd.DataFrame,
@@ -39,6 +47,7 @@ class Preprocessor():
         # numerical features preprocessing
         numerical_keys = self.cfg.numerical.keys() if 'numerical' in self.cfg.keys() else {}
         np_train_num, np_test_num = self._perform_num_feature(numerical_keys)
+
         # categorical features preprocessing
         categorical_key = self.cfg.categorical if 'categorical' in self.cfg.keys() else ''
         np_train_cat, np_test_cat = self._perform_cat_feature(categorical_key)
@@ -61,6 +70,7 @@ class Preprocessor():
                                         len_num=len_test_num)
         return X_train_cont, X_test_cont
 
+    # Overall preprocessing of numerical features
     def _perform_num_feature(self, numerical_keys) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         if preprocessor_num_strategy.replace_null in numerical_keys:
             self._replace_null_value(self.cfg.numerical.replace_null)
@@ -81,6 +91,7 @@ class Preprocessor():
 
         return np_train_num, np_test_num
 
+    # Overall preprocessing of categorical features
     def _perform_cat_feature(self, categorical_key):
         np_train_cat = self.X_train[self.cat_features].to_numpy()
         if self.X_test is not None:
@@ -95,24 +106,26 @@ class Preprocessor():
             if self.X_test is not None:
                 np_test_cat = encoder.transform(self.X_test[self.cat_features])
 
-        if preprocessor_cat_strategy.embedding == categorical_key:
+        elif preprocessor_cat_strategy.embedding == categorical_key:
             pass
 
         return np_train_cat, np_test_cat
 
+    # scaling
     def _fit_transform_scaler(self, scaler):
         scaler.fit(self.X_train[self.num_features])
         self.X_train[self.num_features] = scaler.transform(self.X_train[self.num_features])
         if self.X_test is not None:
             self.X_test[self.num_features] = scaler.transform(self.X_test[self.num_features])
 
+    # binning
     def _fit_transform_binning(self, kbins):
-
         kbins.fit(self.X_train[self.num_features].to_numpy())
         self.X_train[self.num_features] = kbins.transform(self.X_train[self.num_features].to_numpy())
         if self.X_test is not None:
             self.X_test[self.num_features] = kbins.transform(self.X_test[self.num_features])
 
+    # clipping
     def _fit_transform_clipping(self, upper_bound, lower_bound):
         lower_bound_list = self.X_train[self.num_features].quantile(lower_bound, numeric_only=True)
         upper_bound_list = self.X_train[self.num_features].quantile(1 - upper_bound, numeric_only=True)
@@ -121,6 +134,7 @@ class Preprocessor():
             if self.X_test is not None:
                 self.X_test[num_feat] = np.clip(self.X_test[num_feat].to_numpy(), lower_bound_list[num_feat], upper_bound_list[num_feat])
 
+    # replace null value to other
     def _replace_null_value(self, replace_value):
         for col in self.X_train.columns:
             if col in JARVIS_NULL_REPLACEMENTS.keys():
@@ -128,6 +142,7 @@ class Preprocessor():
                 if self.X_test is not None:
                     self.X_test[col] = self.X_test[col].replace({c: replace_value for c in JARVIS_NULL_REPLACEMENTS[col].keys()})
 
+    # get scaler
     def _get_scaler(self, scaler_cfg):
         scaler_list = {
             'quantile_transformer': QuantileTransformer(n_quantiles=scaler_cfg.n_quantiles,
@@ -138,6 +153,8 @@ class Preprocessor():
             'gauss_rank': GaussRankScaler()
         }
         return scaler_list[scaler_cfg.name]
+
+    # get binning object
     def _get_bins(self, binning_cfg):
         kbins = KBinsDiscretizer(n_bins=binning_cfg.n_bins,
                                  encode='ordinal',

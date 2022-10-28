@@ -30,4 +30,4 @@ loss_weight:
 
 path: res/models
 name: deepstack_dae
-result: deepstack_dae_1500_dw
+result: deepstack_dae_1500

@@ -1,17 +1,9 @@
-import os
-import warnings
-from pathlib import Path
 from typing import Callable, NoReturn, Optional, Tuple
 
 import lightgbm as lgb
-import numpy as np
 import pandas as pd
-import wandb.catboost as wandb_cb
-import wandb.lightgbm as wandb_lgb
-import wandb.xgboost as wandb_xgb
 import xgboost as xgb
 from catboost import CatBoostClassifier, Pool
-from hydra.utils import get_original_cwd
 
 from .base_model import BaseModel
 
@@ -56,9 +48,6 @@ class CatBoostTrainer(BaseModel):
                y_train: pd.Series,
                X_valid: Optional[pd.DataFrame] = None,
                y_valid: Optional[pd.Series] = None) -> CatBoostClassifier:
-        """
-        :return: Catboost Model
-        """
 
         train_data = Pool(
             data=X_train,

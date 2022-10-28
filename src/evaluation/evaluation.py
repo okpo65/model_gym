@@ -1,12 +1,10 @@
 from typing import Tuple, Union
-
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn import metrics
 from sklearn.metrics import roc_curve as r_curve
-from sklearn.metrics import r2_score
 from pytorch_tabnet.metrics import Metric
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -20,24 +18,6 @@ class AmexMetric(Metric):
     def __call__(self, y_true: np.ndarray, y_score: np.ndarray) -> float:
         score = amex_metric(y_true, y_score[:, 1])
         return score
-
-
-class CatBoostEvalMetricAmex:
-    def get_final_error(self, error: np.ndarray, weight: np.ndarray) -> np.ndarray:
-        return error
-
-    def is_max_optimal(self) -> bool:
-        return True
-
-    def evaluate(
-        self, approxes: np.ndarray, target: np.ndarray, weight: np.ndarray
-    ) -> Tuple[float, int]:
-        assert len(approxes) == 1
-        assert len(target) == len(approxes[0])
-        preds = np.array(approxes[0])
-        target = np.array(target)
-        return amex_metric(np.array(target), np.array(preds)), 0
-
 
 def amex_metric(
     y_true: Union[pd.Series, np.ndarray], y_pred: Union[pd.Series, np.ndarray]
@@ -72,7 +52,6 @@ def xgb_amex_metric(y_pred: np.ndarray, dtrain: xgb.DMatrix) -> Tuple[str, float
     """The competition metric with xgboost's calling convention"""
     y_true = dtrain.get_label()
     return "amex", amex_metric(y_true, y_pred)
-
 
 class SegMetric:
     def __init__(self, task='css'):

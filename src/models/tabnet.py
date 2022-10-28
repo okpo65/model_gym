@@ -1,14 +1,11 @@
-import gc
-import logging
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import torch
 from pytorch_tabnet.tab_model import TabNetClassifier
-from sklearn.model_selection import StratifiedKFold
 
-from .base_model import BaseModel, ModelResult
+from .base_model import BaseModel
 
 class TabNetTrainer(BaseModel):
     def __init__(self,

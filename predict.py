@@ -11,7 +11,6 @@ from src.models.infer import inference, load_model, inference_mlp, inference_dae
 from src.evaluation.evaluation import css_metric
 from src.dataset.preprocessing import Preprocessor
 from src.utils.utils import DictX
-# from utils.utils import seed_everything
 
 __all_model__ = DictX(
     catboost='catboost',

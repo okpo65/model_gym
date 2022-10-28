@@ -5,7 +5,7 @@
 
 defaults:
   - dataset: dataset
-  - model: mlp
+  - model: deepstack_dae
   - features: features
   - preprocessing: preprocessing
 

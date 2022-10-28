@@ -74,7 +74,7 @@ def get_model(model_name, cfg):
     :param model_name: model name from hydra config
     :return: Model Object
 
-    Determine the model object with the model name in the config fiile
+    Determine the model object with the model name in the config file
     """
     if model_name == __all_model__.lgbm:
         model = LGBMTrainer(config=cfg, metric=css_metric)

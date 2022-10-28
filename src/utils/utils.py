@@ -7,6 +7,12 @@ from operator import lt, gt
 WANDB_KEY = '196381c208adc1e785f267c966fe745bf68e987a'
 
 def read_csv_file(file_path):
+    """
+    :param file_path: csv file path
+    :return: array list
+
+    csv to list
+    """
     res_list = []
     with open(file_path, mode='r') as csvfile:
         reader = csv.reader(csvfile)
@@ -14,6 +20,9 @@ def read_csv_file(file_path):
     return res_list
 
 class AverageMeter(object):
+    """
+    Average value generator for a specific size
+    """
     def __init__(self, mv_size=128, init_val=None):
         self.mv_size = mv_size
         self.reset(init_val)
@@ -34,7 +43,9 @@ class AverageMeter(object):
 
 
 class EarlyStopping(object):
-    """Monitoring an metric, flag when to stop training."""
+    """
+    Monitoring an metric, flag when to stop training
+    """
     def __init__(self, mode='min', min_delta=0, percentage=False, patience=10, initial_bad=0, initial_best=np.nan, verbose=0):
         assert patience > 0, 'patience must be positive integer'
         assert mode in ['min', 'max'], 'mode must be either min or max'
@@ -78,6 +89,9 @@ class EarlyStopping(object):
             self.mode, self.num_bad_epochs, self.patience, self.best)
 
 class SwapNoiseMasker(object):
+    """
+    Generate noise with data random swap within the same dimension
+    """
     def __init__(self, probas):
         self.probas = torch.from_numpy(np.array(probas))
 
@@ -88,6 +102,9 @@ class SwapNoiseMasker(object):
         return corrupted_X, mask
 
 class DictX(dict):
+    """
+    Access members of dictionary by dot
+    """
     def __getattr__(self, key):
         try:
             return self[key]

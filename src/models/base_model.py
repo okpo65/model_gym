@@ -1,7 +1,5 @@
 import gc
-import logging
 import pickle
-import warnings
 from abc import ABCMeta, abstractclassmethod, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,14 +15,12 @@ from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 from sklearn.model_selection import StratifiedKFold
 from ..dataset.dataset import DataContainer
-from wandb.sklearn import plot_feature_importances
 
 @dataclass
 class ModelResult:
     oof_preds: np.ndarray
     models: Dict[str, Any]
     scores: Dict[str, Dict[str, float]]
-
 
 class BaseDAEModel(metaclass=ABCMeta):
     def __init__(self,
@@ -41,9 +37,6 @@ class BaseDAEModel(metaclass=ABCMeta):
         raise NotImplementedError
 
     def save_model(self) -> NoReturn:
-        """
-        Save Model
-        """
 
         model_path = (
             Path(get_original_cwd()) / self.config.model.path / self.config.model.result
@@ -91,16 +84,12 @@ class BaseDLModel(metaclass=ABCMeta):
 
 
     def save_model(self) -> NoReturn:
-            """
-            Save Model
-            """
+        model_path = (
+            Path(get_original_cwd()) / self.config.model.path / self.config.model.result
+        )
 
-            model_path = (
-                Path(get_original_cwd()) / self.config.model.path / self.config.model.result
-            )
-
-            with open(model_path, 'wb') as output:
-                pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+        with open(model_path, 'wb') as output:
+            pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
 
     def train(self,
               train_cont: DataContainer):
@@ -154,7 +143,7 @@ class BaseDLModel(metaclass=ABCMeta):
             X_valid = X_valid.reset_index(drop=True).to_numpy()
             y_valid = y_valid.reset_index(drop=True).to_numpy()
 
-            # model
+            # processing for creating dataloader
             train_split_cont = DataContainer(df=X_train,
                                      df_y=y_train,
                                      len_cat=len_cat,
@@ -181,11 +170,12 @@ class BaseDLModel(metaclass=ABCMeta):
                                 len_num=len_num)
             models[f"fold_{fold}"] = model
 
-            # validation
+            # validation score
             oof_preds[valid_idx] = (
                 model.predict(valid_dl) / folds
             )
             print("oof_preds!!", oof_preds)
+
             # score
             score = self.metric(oof_preds[valid_idx], y_valid)
             print(f"fold_metric: {score}")
@@ -223,10 +213,6 @@ class BaseModel(metaclass=ABCMeta):
         raise NotImplementedError
 
     def save_model(self) -> NoReturn:
-        """
-        Save Model
-        """
-
         model_path = (
             Path(get_original_cwd()) / self.config.model.path / self.config.model.result
         )

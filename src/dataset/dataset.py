@@ -116,7 +116,7 @@ class DataContainer():
 
     def get_splited_dataloader(self, batch_size, num_workers, split_ratio=0.9) -> Tuple[DataLoader,
                                                                                         DataLoader]:
-        train_x, valid_x, train_y, valid_y = self.get_split_dataframe(split_ratio)
+        train_x, valid_x, train_y, valid_y = self.get_splited_dataframe(split_ratio)
 
         train_x = DataLoader(dataset=TrainDataset(train_x, train_y),
                              batch_size=batch_size,

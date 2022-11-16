@@ -5,14 +5,16 @@
 #  - preprocessing: preprocessing_for_ml
 
 defaults:
-  - dataset: dataset
+  - dataset: dataset3
   - model: deepstack_dae
-  - features: features
+  - features: features_with_dw_v2
   - preprocessing: preprocessing
 
 output:
-  before_path: ${dataset.root}/df_cds_test_reconstructed_before.parquet
-  after_path: ${dataset.root}/df_cds_test_reconstructed_after.parquet
+  before_path: ${dataset.root}/dataset/dae/df_nondefault_reconstructed_before.parquet
+  after_path: ${dataset.root}/dataset/dae/df_nondefault_reconstructed_after.parquet
+  representation_path: ${dataset.root}/dataset/dae/df_nondefault_representation.parquet
+  confidence_path: ${dataset.root}/dataset/dae/df_nondefault_confidence.parquet
 
 #  path: res/output
 #  name: ${model.result}_test_2.csv

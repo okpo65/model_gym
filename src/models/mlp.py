@@ -8,6 +8,8 @@ from torch.utils.data import Dataset, DataLoader
 from ..utils.utils import SwapNoiseMasker, EarlyStopping, AverageMeter
 from .base_model import BaseDLModel
 import wandb
+from ..utils.FocalLoss import FocalLoss
+import sys
 
 class DeepStackMLP(torch.nn.Module):
     def __init__(self,
@@ -72,6 +74,150 @@ class DeepStackMLP(torch.nn.Module):
         predictions = np.concatenate(predictions).reshape(-1)
         return predictions
 
+    # MC Dropout
+    def predict_uncertainty(self, test_dl: DataLoader, n_process):
+        """
+        :param test_dl: Test dataloader
+        :param n_process: number of times how many mc dropout process
+        :return:
+        """
+        self.eval()
+        self.train()
+        total_predictions = []
+        with torch.no_grad():
+            for _ in tqdm(range(n_process)):
+                predictions = []
+                for i, x in enumerate(test_dl):
+                    if isinstance(x, list):
+                        x = x[0]
+                    x = x.cuda()
+                    prediction = self.forward(x)
+                    predictions.append(prediction.detach().cpu().numpy())
+                predictions = np.concatenate(predictions).reshape(-1)
+                if total_predictions == []:
+                    total_predictions = predictions
+                else:
+                    total_predictions = np.vstack([total_predictions, predictions])
+            mean = np.mean(total_predictions, axis=0)
+            std = np.std(total_predictions, axis=0)
+
+        return mean, std
+
+class DeepStackMLP_V2(torch.nn.Module):
+    def __init__(self,
+                 len_cat,
+                 len_num,
+                 dropout_ratio,
+                 hidden_size,
+                 lower_bound=0,
+                 upper_bound=10.5):
+        super().__init__()
+
+        self.len_total = len_cat + len_num
+        self.hidden_size = hidden_size
+        self.half_hidden_size = int(self.hidden_size / 2)
+        self.half_half_hidden_size = int(self.half_hidden_size / 2)
+        self.dropout_ratio = dropout_ratio
+        self.layer_1 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=self.len_total, out_features=self.hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.BatchNorm1d(self.hidden_size),
+            torch.nn.Dropout(self.dropout_ratio)
+        )
+        self.layer_2 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.BatchNorm1d(self.hidden_size),
+            torch.nn.Dropout(self.dropout_ratio)
+        )
+        self.layer_3 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.BatchNorm1d(self.hidden_size),
+            torch.nn.Dropout(self.dropout_ratio)
+        )
+        self.layer_4 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.BatchNorm1d(self.hidden_size),
+            torch.nn.Dropout(self.dropout_ratio)
+        )
+        self.last_linear = torch.nn.Linear(self.hidden_size, 1)
+
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+
+    def net(self, x):
+        x = self.layer_1(x)
+        x = self.layer_2(x)
+        x = self.layer_3(x)
+        x = self.layer_4(x)
+        return self.last_linear(x)
+
+    def forward(self, x):
+        return torch.sigmoid(self.net(x) * (self.upper_bound - self.lower_bound) + self.lower_bound)
+
+    # def loss(self, x, y, mask=None, weights=[0.3, 0.7]):
+    #     x_cats, x_nums = self.split(self.forward(x))
+    #     y_cats, y_nums = self.split(y)
+    #
+    #     # focal_loss = FocalLoss(size_average=False)
+    #     cat_loss = weights[0] * torch.nn.functional.binary_cross_entropy_with_logits(x_cats, y_cats, reduction='none')
+    #     num_loss = weights[1] * torch.nn.functional.mse_loss(x_nums, y_nums, reduction='none')
+    #     loss = cat_loss.mean() + num_loss.mean()
+    #     return loss
+
+    def loss(self, x, y, weights=[3, 14]):
+        # mlp_loss = torch.nn.functional.binary_cross_entropy(x, y)
+        mlp_loss = FocalLoss(gamma=2, alpha=0.25).forward(x, y)
+        # mlp_loss = torch.nn.functional.mse_loss(x, y)
+        return mlp_loss
+
+    def split(self, t):
+        return torch.split(t, [self.len_cat, self.len_num], dim=1)
+
+    def predict(self, test_dl: DataLoader) -> np.ndarray:
+        self.eval()
+        predictions = []
+        with torch.no_grad():
+            for i, x in enumerate(test_dl):
+                if isinstance(x, list):
+                    x = x[0]
+                x = x.cuda()
+                prediction = self.forward(x)
+                predictions.append(prediction.detach().cpu().numpy())
+        predictions = np.concatenate(predictions).reshape(-1)
+        return predictions
+
+    # MC Dropout
+    def predict_uncertainty(self, test_dl: DataLoader, n_process):
+        """
+        :param test_dl: Test dataloader
+        :param n_process: number of times how many mc dropout process
+        :return:
+        """
+        self.eval()
+        self.train()
+        total_predictions = []
+        with torch.no_grad():
+            for _ in tqdm(range(n_process)):
+                predictions = []
+                for i, x in enumerate(test_dl):
+                    if isinstance(x, list):
+                        x = x[0]
+                    x = x.cuda()
+                    prediction = self.forward(x)
+                    predictions.append(prediction.detach().cpu().numpy())
+                predictions = np.concatenate(predictions).reshape(-1)
+                if total_predictions == []:
+                    total_predictions = predictions
+                else:
+                    total_predictions = np.vstack([total_predictions, predictions])
+            mean = np.mean(total_predictions, axis=0)
+            std = np.std(total_predictions, axis=0)
+
+        return mean, std
+
 class MLP(BaseDLModel):
     def __init__(self, **kwargs) -> NoReturn:
         super().__init__(**kwargs)
@@ -121,7 +267,8 @@ class MLP(BaseDLModel):
                 optimizer.step()
                 meter.update(loss.detach().cpu().numpy())
             train_loss = meter.overall_avg
-            metrics = {"train/train_loss": train_loss}
+            metrics = {"train/train_loss": train_loss,
+                       "train/learning_rate": optimizer.param_groups[0]['lr']}
             # valid
             meter.reset()
             model.eval()

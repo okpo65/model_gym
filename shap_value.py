@@ -5,10 +5,9 @@ import hydra
 import pandas as pd
 from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
-
+import tqdm
 from src.dataset.dataset import load_train_data, load_test_data
-from src.models.infer import inference, load_model, inference_mlp, inference_dae, inference_feature_importance
-from src.evaluation.evaluation import css_metric
+from src.models.infer import load_model, inference_shap, inference_dae, inference_shap_v2
 from src.dataset.preprocessing import Preprocessor
 from src.utils.utils import DictX
 
@@ -24,13 +23,13 @@ __all_model__ = DictX(
 )
 representation_key = 'representation'
 
-@hydra.main(config_path="config/", config_name='predict', version_base='1.2.0')
+@hydra.main(config_path="config/", config_name='shap', version_base='1.2.0')
 def _main(cfg: DictConfig):
 
     """
     :param cfg: predict config file
 
-    Evaluate model performance with already trained model
+    Explain model with shapley value
     """
     # model load
     path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
@@ -60,23 +59,12 @@ def _main(cfg: DictConfig):
         dae_results = load_model(cfg, model_path)
         test_cont = inference_dae(dae_results, test_cont)
 
-    # infer test dataset
-    model_name = cfg.model.name
-    if model_name == __all_model__.mlp:
-        test_dl = test_cont.get_test_dataloader(batch_size=cfg.model.batch_size,
-                                                num_workers=cfg.dataset.num_workers)
-        preds = inference_mlp(results, test_dl)
-    else:
-        X_test, _ = test_cont.get_dataframe()
-        preds = inference(results, X_test)
-
-    # save predidtion
-    model_path = (
-        Path(get_original_cwd()) / cfg.output.path / cfg.output.name
-    )
-    pd.DataFrame(preds).to_csv(model_path)
-
-    print(f"KS: {css_metric(preds, y_test)}")
+    # get shapley value list
+    shap_value_list = inference_shap_v2(results, test_cont)
+    shap_value_list.to_parquet('df_ranking_test.parquet')
+    # for shap in shap_value_list:
+    #     print(shap, len(shap[0]), len(shap[1]))
+    #     print(len(shap[0][0]), len(shap[1][0]))
 
 if __name__ == "__main__":
     _main()

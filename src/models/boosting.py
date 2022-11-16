@@ -6,6 +6,7 @@ import xgboost as xgb
 from catboost import CatBoostClassifier, Pool
 
 from .base_model import BaseModel
+from wandb.lightgbm import wandb_callback, log_summary
 
 class LGBMTrainer(BaseModel):
     def __init__(self, **kwargs) -> NoReturn:
@@ -34,9 +35,11 @@ class LGBMTrainer(BaseModel):
             params=dict(self.config.model.params),
             verbose_eval=self.config.model.verbose,
             num_boost_round=self.config.model.num_boost_round,
+            callbacks=[wandb_callback()]
             # feval=lgb_amex_metric,
             # fobj=self._weighted_logloss if self.config.model.loss.is_customized else None,
         )
+
         return model
 
 class CatBoostTrainer(BaseModel):
@@ -91,7 +94,6 @@ class XGBoostTrainer(BaseModel):
             dtrain=dtrain,
             evals=watchlist,
             num_boost_round=self.config.model.num_boost_round,
-            early_stopping_rounds=self.config.model.early_stopping_rounds,
             verbose_eval=self.config.model.verbose,
         )
 

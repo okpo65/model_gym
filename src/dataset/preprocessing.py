@@ -5,7 +5,7 @@ from typing import Optional, List, Tuple
 from ..utils.utils import DictX
 from ..utils.constants import JARVIS_NULL_REPLACEMENTS
 from ..dataset.dataset import DataContainer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, QuantileTransformer, KBinsDiscretizer, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, QuantileTransformer, KBinsDiscretizer, OneHotEncoder, RobustScaler
 from ..utils.GaussRankScaler import GaussRankScaler
 
 
@@ -57,7 +57,8 @@ class Preprocessor(object):
         len_train_cat = np_train_cat.shape[1]
         len_train_num = np_train_num.shape[1]
 
-        X_train_cont = DataContainer(df=pd.DataFrame(np_train),
+        train_columns = [f"cat_{idx}" for idx in range(0, len_train_cat)] + [col for col in self.num_features]
+        X_train_cont = DataContainer(df=pd.DataFrame(np_train, columns=train_columns),
                                      df_y=self.y_train,
                                      len_cat=len_train_cat,
                                      len_num=len_train_num)
@@ -65,7 +66,8 @@ class Preprocessor(object):
         if self.X_test is not None:
             len_test_cat = np_test_cat.shape[1]
             len_test_num = np_test_num.shape[1]
-            X_test_cont = DataContainer(df=pd.DataFrame(np_test),
+            test_columns = [f"cat_{idx}" for idx in range(0, len_test_cat)] + [col for col in self.num_features]
+            X_test_cont = DataContainer(df=pd.DataFrame(np_test, columns=test_columns),
                                         len_cat=len_test_cat,
                                         len_num=len_test_num)
         return X_train_cont, X_test_cont
@@ -149,6 +151,7 @@ class Preprocessor(object):
                                                         output_distribution=scaler_cfg.output_distribution,
                                                         random_state=scaler_cfg.random_state),
             'standard': StandardScaler(),
+            'robust': RobustScaler(),
             'minmax': MinMaxScaler(),
             'gauss_rank': GaussRankScaler()
         }

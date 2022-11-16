@@ -1,14 +1,21 @@
-folds: 5
+folds: 10
 params:
-  learning_rate: 0.001
-  iterations: 10000
-#  max_depth: 7
-  loss_function: Logloss
-#  l2_leaf_reg: 70
+  booster: dart
+  learning_rate: 0.005
+  max_leaves: 100
+  colsample_bytree: 0.7
+  subsample: 0.3
+  max_depth: 30
+  tree_method: gpu_hist
+  eval_metric: logloss
+  early_stopping_rounds: 100
+  seed: 42
+  verbose: True
 
 name: xgboost
-early_stopping_rounds: 100
+num_boost_round: 15000
+
 path: res/models
-result: xgboost
+result: xgboost_10fold_dw_v2
 seed: 42
 verbose: 500

@@ -15,6 +15,7 @@ from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 from sklearn.model_selection import StratifiedKFold
 from ..dataset.dataset import DataContainer
+from wandb.lightgbm import wandb_callback, log_summary
 
 @dataclass
 class ModelResult:
@@ -234,9 +235,24 @@ class BaseModel(metaclass=ABCMeta):
 
         train_x, train_y = train_cont.get_dataframe()
 
+        wandb.init(project='model_gym',
+                   group=f"{self.config.model.result}",
+                   job_type=f'train_{0}',
+                   config=self.config.model,
+                   reinit=True)
+
         if folds == 1:
             X_train, X_valid, y_train, y_valid = train_cont.get_splited_dataframe()
+
+            wandb.init(project='model_gym',
+                       group=f"{self.config.model.result}",
+                       job_type=f'train_{0}',
+                       config=self.config.model,
+                       reinit=True)
+
             model = self._train(X_train, y_train, X_valid, y_valid)
+
+            log_summary(model, save_model_checkpoint=True)
             models[f"fold_0"] = model
             # validation
             pred = model.predict(X_valid) if isinstance(model, lgb.Booster) else model.predict(
@@ -264,10 +280,16 @@ class BaseModel(metaclass=ABCMeta):
             X_train, y_train = train_x.iloc[train_idx], train_y.iloc[train_idx]
             X_valid, y_valid = train_x.iloc[valid_idx], train_y.iloc[valid_idx]
 
+            wandb.init(project='model_gym',
+                       group=f"{self.config.model.result}",
+                       job_type=f'train_{fold}',
+                       config=self.config.model,
+                       reinit=True)
 
             # model
             model = self._train(X_train, y_train, X_valid, y_valid)
             models[f"fold_{fold}"] = model
+            log_summary(model, save_model_checkpoint=True)
 
             # validation
             oof_preds[valid_idx] = (

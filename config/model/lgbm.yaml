@@ -1,22 +1,49 @@
-folds: 5
+# v2
+folds: 1
 params:
   boosting: dart
-  learning_rate: 0.01
+  learning_rate: 0.005
   objective: binary
   num_leaves: 100
   lambda_l2: 2
   lambda_l1: 0.0001
-  feature_fraction: 0.2
-  bagging_fraction: 0.5
+  feature_fraction: 0.7
+  bagging_fraction: 0.3
   bagging_freq: 10
-  min_data_in_leaf: 40
+  max_depth: -1
+  min_data_in_leaf: 64
+  early_stopping_rounds: 100
   seed: 42
   verbose: -1
 
 path: res/models
 name: lgbm
-result: 5fold_lgbm_seed42.pkl
-working: working
-early_stopping_rounds: 100
-num_boost_round: 10500
+result: lgbm_10fold_v2_dw_v2 # lgbm_10fold_v2_dw_v2
+
+num_boost_round: 15000
 verbose: 500
+
+
+# v1
+#folds: 10
+#params:
+#  boosting: dart
+#  learning_rate: 0.01
+#  objective: binary
+#  num_leaves: 100
+#  lambda_l2: 2
+#  lambda_l1: 0.0001
+#  feature_fraction: 0.2
+#  bagging_fraction: 0.5
+#  bagging_freq: 10
+#  min_data_in_leaf: 40
+#  early_stopping_rounds: 100
+#  seed: 42
+#  verbose: -1
+#
+#path: res/models
+#name: lgbm
+#result: lgbm_10fold_dw
+#
+#num_boost_round: 10500
+#verbose: 500

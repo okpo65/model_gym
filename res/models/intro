@@ -1,0 +1,34 @@
+# catboost
+    catboost_raw
+    catboost_raw_dw
+    catboost_10fold_dw
+# LGBM
+    lgbm_10fold_dw (dart + 10folds + dw) - ks 63
+    lgbm_10fold_dw_v2 (dart + 10folds + dw_v2)
+    lgbm_10fold_proxy_dw (dart + 10folds + proxy dataset)
+    lgbm_10fold_v2 (dart + 10folds + lgbm params v2 set)
+    lgbm_10fold_v2_dw_v2 (dart + 10folds + params v2 + dw v2)
+    lgbm_10fold_v2_transformer_dae_dw_v2 (dart v2 + 10folds + dw v2 + transformer dae feature)
+    lgbm_1fold_v2_dw_v2 (1 fold + dart v2 + dw v2 + for feature importance)
+# XGBoost
+
+# DAE
+    # Deepstack
+        deepstack_dae_1500 (1500 representation)
+        deepstack_dae_1500_dw (dw + 1500 representation)
+        deepstack_dae_4500_dw
+        deepstack_dae_4500_dw_v2 (dw v2 + 4500 representations)
+        deepstack_dae_dataset3_4500_dw_v2 (dataset3 + dw v2 + 4500 representations)
+    # Bottleneck
+        bottleneck_dae_64_dw (dw + 256 hidden size)
+    # Transformer
+        transformer_dae_1024_dw_v2 (dw v2 + 1024 hidden size)
+
+# MLP
+    mlp_1500dae_dw (1500 feat deepstack_dae + dw features + 5 folds)
+    mlp_4500dae_256hs_dw (4500 feat deepstack_dae + 256 hidden size + dw features + 5 folds)
+    mlp_64dae_256hs_dw (64 feat bottlenect_dae + 256 hidden size + dw features + 5 folds)
+    mlp_256hs_dw_v2 (256 hidden size + dw v2 features + 1 fold)
+    mlp_deepstack_dae_dataset3_4500_dw_v2 (mlp + deepstack_dae 4500 + dataset3 + 1fold)
+    mlp_transformer_dae_1024_dw_v2 (mlp + transformer_dae 1024 + dw v2)
+    mlp_3_512_test_dw_v2(mlp 3 + 512 batch size + test + dw v2)

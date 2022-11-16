@@ -11,6 +11,8 @@ from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from ..utils.utils import SwapNoiseMasker
 import torch
+import matplotlib.pyplot as plt
+import shap
 from tqdm import tqdm
 from ..dataset.dataset import DataContainer
 from .base_model import ModelResult
@@ -56,6 +58,16 @@ def inference(result: ModelResult,
 
     return preds_proba
 
+def inference_feature_importance(result: ModelResult, cat_features, num_features) -> pd.DataFrame:
+    folds = len(result.models)
+    df_fi = pd.DataFrame()
+    df_fi['feature_names'] = cat_features + sorted(num_features)
+    for fold, model in tqdm(enumerate(result.models.values()), total=folds):
+        feature_importance = np.array(model.feature_importances_)
+        df_fi[f'feature_importance_{fold}'] = feature_importance
+
+    return df_fi
+
 def inference_mlp(result: ModelResult,
                   test_dl: DataLoader) -> np.ndarray:
     """
@@ -78,8 +90,8 @@ def inference_dae(result: ModelResult,
                   train_cont: DataContainer) -> DataContainer:
     """
     :param result: ModelResult Object
-    :param train_cont: dataloader to be DAE representation features
-    :return: new dataContainer with representation features
+    :param train_cont: DataContainer to be DAE representation features
+    :return: new DataContainer with representation features
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     test_dl = train_cont.get_test_dataloader(batch_size=512,
@@ -128,4 +140,88 @@ def inference_dae_reconstruction(result: ModelResult,
     return new_test_cont
 
 
+def shap_feature_ranking(df, shap_values, columns=[]):
+    if not columns: columns = df.columns.tolist()  # If columns are not given, take all columns
 
+    c_idxs = []
+    for column in columns: c_idxs.append(df.columns.get_loc(column))  # Get column locations for desired columns in given dataframe
+    if isinstance(shap_values, list):  # If shap values is a list of arrays (i.e., several classes)
+        means = [np.abs(shap_values[class_][:, c_idxs]).mean(axis=0) for class_ in range(len(shap_values))]  # Compute mean shap values per class
+        shap_means = np.sum(np.column_stack(means), 1)  # Sum of shap values over all classes
+    else:  # Else there is only one 2D array of shap values
+        assert len(shap_values.shape) == 2, 'Expected two-dimensional shap values array.'
+        shap_means = np.abs(shap_values).mean(axis=0)
+
+
+    # Put into dataframe along with columns and sort by shap_means, reset index to get ranking
+    df_ranking = pd.DataFrame({'feature': columns, 'mean_shap_value': shap_means}).sort_values(by='mean_shap_value', ascending=False).reset_index(drop=True)
+    df_ranking.index += 1
+    return df_ranking
+
+def shap_feature_ranking_2(df, shap_values, columns=[]):
+    if not columns: columns = df.columns.tolist()  # If columns are not given, take all columns
+    df_ranking = pd.DataFrame(data=shap_values, columns=columns)
+    return df_ranking
+
+def inference_shap(result: ModelResult,
+                   test_cont: DataContainer):
+    folds = len(result.models)
+    shap_value_list = []
+    for model in tqdm(result.models.values(), total=folds):
+        X_test = test_cont.get_dataframe()[0].iloc[:200]
+        if isinstance(model, lgb.Booster) or isinstance(model, xgb.Booster) or isinstance(model, CatBoostClassifier):
+            explainer = shap.TreeExplainer(model)
+            shap_values = explainer.shap_values(X_test)[1]
+            expected_value = explainer.expected_value
+            if isinstance(expected_value, list):
+                expected_value = expected_value[1]
+
+        else:
+            X_test_torch = torch.Tensor(X_test.values).cuda() #torch.from_numpy(X_test.values).cuda().float()
+            explainer = shap.DeepExplainer(model, X_test_torch)
+            shap_values = explainer.shap_values(X_test_torch)
+            shap_values = np.array(shap_values)
+        shap_value_list.append(shap_values)
+        shap.summary_plot(shap_values, X_test, plot_type='bar')
+        plt.savefig('shap_summary.png')
+        df_ranking = shap_feature_ranking_2(X_test, shap_values)
+    return df_ranking
+
+def inference_shap_v2(result: ModelResult,
+                   test_cont: DataContainer):
+    folds = len(result.models)
+
+    def predict_proba(X_test):
+        preds_proba = np.zeros((X_test.shape[0],))
+        for model in tqdm(result.models.values(), total=folds):
+            if isinstance(model, lgb.Booster) or isinstance(model, xgb.Booster) or isinstance(model,
+                                                                                              CatBoostClassifier):
+                preds_proba += (
+                    model.predict(X_test) / folds
+                    if isinstance(model, lgb.Booster)
+                    else model.predict(xgb.DMatrix(X_test)) / folds
+                    if isinstance(model, xgb.Booster)
+                    else model.predict_proba(X_test.to_numpy())[:, 1] / folds
+                    if isinstance(model, CatBoostClassifier)
+                    else model.predict(X_test.to_numpy())
+                )
+        return preds_proba
+
+    X_test = test_cont.get_dataframe()[0].iloc[:10]
+    explainer = shap.KernelExplainer(predict_proba, X_test, link='logit')
+    shap_values = explainer.shap_values(X_test, nsamples=5)
+    df_ranking = shap_feature_ranking_2(X_test, shap_values)
+    return df_ranking
+
+def inference_uncertainty(result: ModelResult,
+                          test_dl: DataLoader,
+                          n_process: int) -> pd.DataFrame:
+    folds = len(result.models)
+    df = pd.DataFrame()
+    for fold, model in tqdm(enumerate(result.models.values()), total=folds):
+        mean, std = model.predict_uncertainty(test_dl,
+                                              n_process=n_process)
+        df[f"mean_{fold}"] = mean
+        df[f"std_{fold}"] = std
+
+    return df

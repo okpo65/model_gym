@@ -7,17 +7,13 @@
 
 defaults:
   - dataset: dataset
-  - model: mlp_3
+  - model: mlp
   - features: features_with_dw_v2
   - preprocessing: preprocessing
 
 representation:
   path: res/models
-  result: deepstack_dae_4500_dw_v2
-
-output:
-  path: res/output
-  name: ${model.result}_test_2.csv
+  result: transformer_dae_1024_dw_v2
 
 #representation:
 #  path: res/models

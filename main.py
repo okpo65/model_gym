@@ -34,6 +34,9 @@ def _main(cfg: DictConfig):
 
     Control the overall course of Learning
     """
+
+    # print("sdfsdfsdfs", cfg.features.keys())
+    # return
     # wandb login
     wandb.login(key=WANDB_KEY)
 
@@ -41,8 +44,9 @@ def _main(cfg: DictConfig):
     X_train, y_train = load_train_data(cfg)
 
     # preprocessing
-    cat_features = [*cfg.features.cat_features]
+    cat_features = [*cfg.features.cat_features] if 'cat_features' in cfg.features.keys() else []
     num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
+
     preprocessor = Preprocessor(cfg.preprocessing,
                                 X_train,
                                 y_train,

@@ -152,7 +152,7 @@ class DeepBottleneck(torch.nn.Module):
         # focal_loss = FocalLoss(size_average=False)
         cat_loss = weights[0] * torch.mul(w_cats, torch.nn.functional.binary_cross_entropy_with_logits(x_cats, y_cats, reduction='none'))
         num_loss = weights[1] * torch.mul(w_nums, torch.nn.functional.mse_loss(x_nums, y_nums, reduction='none'))
-        reconstruction_loss = num_loss.mean()#cat_loss.mean() + num_loss.mean()
+        reconstruction_loss = cat_loss.mean() + num_loss.mean()
         return reconstruction_loss
 
 class TransformerEncoder(torch.nn.Module):
@@ -245,8 +245,7 @@ class TransformerAutoEncoder(torch.nn.Module):
         cat_loss = weights[0] * torch.mul(w_cats, torch.nn.functional.binary_cross_entropy_with_logits(x_cats, y_cats, reduction='none'))
         num_loss = weights[1] * torch.mul(w_nums, torch.nn.functional.mse_loss(x_nums, y_nums, reduction='none'))
 
-        reconstruction_loss = torch.cat([cat_loss, num_loss],
-                                        dim=1) if reduction == 'none' else cat_loss.mean() + num_loss.mean()
+        reconstruction_loss = torch.cat([cat_loss, num_loss], dim=1) if reduction == 'none' else cat_loss.mean() + num_loss.mean()
         mask_loss = self.mask_loss_weight * torch.nn.functional.binary_cross_entropy_with_logits(predicted_mask, mask, reduction=reduction)
 
         return reconstruction_loss + mask_loss if reduction == 'mean' else [reconstruction_loss, mask_loss]

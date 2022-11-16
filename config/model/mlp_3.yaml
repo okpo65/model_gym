@@ -1,6 +1,6 @@
 folds: 1
 params:
-  hidden_size: 256
+  hidden_size: 512
   dropout_ratio: 0.2
 
 optimizer:
@@ -9,7 +9,7 @@ optimizer:
 
 scheduler:
   gamma: 0.995
-  patience: 30
+  patience: 5
   verbose: 0
   cooldown: 2
   min_lr: 1e-7
@@ -26,4 +26,4 @@ eval_verbose: 1
 
 path: res/models
 name: mlp
-result: mlp_4500dae_256hs_dw # mlp_256hs_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_64dae_256hs_dw
+result: mlp_3_512_test_dw_v2 # mlp_3_1500_test_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_64dae_256hs_dw

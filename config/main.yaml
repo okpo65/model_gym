@@ -3,16 +3,6 @@
 #    dir: log/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 #  output_subdir: null
 
-defaults:
-  - dataset: dataset
-  - model: deepstack_dae
-  - features: features
-  - preprocessing: preprocessing
-
-#representation:
-#  path: res/models
-#  result: deepstack_dae_with_dw
-
 #defaults:
 #  - dataset: dataset_with_dw
 #  - model: mlp
@@ -21,4 +11,22 @@ defaults:
 #
 #representation:
 #  path: res/models
-#  result: deepstack_dae
+#  result: deepstack_dae_1500_dw
+
+defaults:
+  - dataset: dataset
+  - model: mlp_3
+  - features: features_with_dw_v2
+  - preprocessing: preprocessing
+
+representation:
+  path: res/models
+  result: deepstack_dae_4500_dw_v2
+
+output:
+  path: res/output
+  name: ${model.result}_test_2.csv
+
+#representation:
+#  path: res/models
+#  result: transformer_dae_1024_dw_v2

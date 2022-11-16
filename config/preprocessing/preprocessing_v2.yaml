@@ -3,7 +3,7 @@ numerical:
     name: standard # standard, minmax, quantil_transformer, label
     n_quantiles: 1000
     random_state: 42
-    output_distribution: uniform # uniform, normal
+    output_distribution: normal # uniform, normal
 
 # kbins
   binning:

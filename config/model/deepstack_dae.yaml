@@ -1,5 +1,5 @@
 params:
-  hidden_size: 500
+  hidden_size: 1500
   emphasis: 0.8
 
 optimizer:
@@ -15,19 +15,18 @@ earlystopper:
   verbose: 1
 
 noise_ratio:
-  num: 0.25
-  cat: 0.25
+  num: 0.3
+  cat: 0.8
 
 batch_size: 512
-num_workers: ${dataset.num_workers}
 iterations: 3000
 
 eval_verbose: 1
 
 loss_weight:
-  cat: 0.2
-  num: 0.8
+  cat: 0.3
+  num: 0.7
 
 path: res/models
 name: deepstack_dae
-result: deepstack_dae_1500
+result: deepstack_dae_dataset3_4500_dw_v2

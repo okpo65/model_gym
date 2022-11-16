@@ -1,7 +1,7 @@
-folds: 1
+folds: 10
 params:
 #  learning_rate: 0.001
-  iterations: 10000
+  iterations: 15000
 #  max_depth: 7
   eval_metric: AUC
   loss_function: Logloss
@@ -11,6 +11,6 @@ params:
 name: catboost
 
 path: res/models
-result: catboost_tmp
+result: catboost_10fold_dw
 seed: 42
 verbose: 500

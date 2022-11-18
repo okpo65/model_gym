@@ -16,12 +16,12 @@
 defaults:
   - dataset: dataset
   - model: mlp_3
-  - features: features_with_dw_v2
-  - preprocessing: preprocessing
+  - features: features_css
+  - preprocessing: preprocessing_v2
 
-representation:
-  path: res/models
-  result: deepstack_dae_4500_dw_v2
+#representation:
+#  path: res/models
+#  result: deepstack_dae_4500_dw_v2
 
 output:
   path: res/output

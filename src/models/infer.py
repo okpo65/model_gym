@@ -17,6 +17,7 @@ from tqdm import tqdm
 from ..dataset.dataset import DataContainer
 from .base_model import ModelResult
 
+
 def load_model(config: DictConfig, model_name: str) -> ModelResult:
     """
     :param config: Hydra config
@@ -220,6 +221,20 @@ def inference_uncertainty(result: ModelResult,
     df = pd.DataFrame()
     for fold, model in tqdm(enumerate(result.models.values()), total=folds):
         mean, std = model.predict_uncertainty(test_dl,
+                                              n_process=n_process)
+        df[f"mean_{fold}"] = mean
+        df[f"std_{fold}"] = std
+
+    return df
+
+
+def inference_uncertainty_2(result: ModelResult,
+                          X_test: pd.DataFrame,
+                          n_process: int) -> pd.DataFrame:
+    folds = len(result.models)
+    df = pd.DataFrame()
+    for fold, model in tqdm(enumerate(result.models.values()), total=folds):
+        mean, std = model.predict_uncertainty(X_test,
                                               n_process=n_process)
         df[f"mean_{fold}"] = mean
         df[f"std_{fold}"] = std

@@ -163,3 +163,15 @@ class Preprocessor(object):
                                  encode='ordinal',
                                  strategy=binning_cfg.strategy)
         return kbins
+
+    # def _fit_sacler(self, scaler):
+    #     scaler.fit(self.X_train[self.num_features])
+    #
+    # def _fit_binnning(self, kbins):
+    #     kbins.fit(self.X_train[self.num_features].to_numpy())
+    #
+    # def _fit_clipping(self, upper_bound, lower_bound):
+    #     lower_bound_list = self.X_train[self.num_features].quantile(lower_bound, numeric_only=True)
+    #     upper_bound_list = self.X_train[self.num_features].quantile(1 - upper_bound, numeric_only=True)
+    #
+    # def _replace_null(self):

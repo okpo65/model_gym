@@ -20,10 +20,11 @@ earlystopper:
   verbose: 1
 
 batch_size: 512
-iterations: 3000
+iterations: 3
 
 eval_verbose: 1
 
 path: res/models
 name: mlp
-result: mlp_3_512_test_dw_v2 # mlp_3_1500_test_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_64dae_256hs_dw
+result: mlp_css5_1_meta_3 # mlp_3_1500_test_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_64dae_256hs_dw
+

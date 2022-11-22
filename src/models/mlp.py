@@ -18,29 +18,31 @@ class DeepStackMLP(torch.nn.Module):
                  dropout_ratio,
                  hidden_size,
                  lower_bound=0,
-                 upper_bound=10.5):
+                 upper_bound=10.5,
+                 device=torch.device('cpu')):
         super().__init__()
 
         self.len_total = len_cat + len_num
         self.hidden_size = hidden_size
+        self.device = device
         self.half_hidden_size = int(self.hidden_size / 2)
         self.dropout_ratio = dropout_ratio
         self.layer_1 = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.len_total, out_features=self.hidden_size),
             torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(self.hidden_size),
+            # torch.nn.BatchNorm1d(self.hidden_size),
             torch.nn.Dropout(self.dropout_ratio)
         )
         self.layer_2 = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.hidden_size, out_features=self.half_hidden_size),
             torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(self.half_hidden_size),
+            # torch.nn.BatchNorm1d(self.half_hidden_size),
             torch.nn.Dropout(self.dropout_ratio)
         )
         self.layer_3 = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.half_hidden_size, out_features=self.half_hidden_size),
             torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(self.half_hidden_size),
+            # torch.nn.BatchNorm1d(self.half_hidden_size),
             torch.nn.Dropout(self.dropout_ratio)
         )
         self.last_linear = torch.nn.Linear(self.half_hidden_size, 1)
@@ -68,7 +70,7 @@ class DeepStackMLP(torch.nn.Module):
             for i, x in enumerate(test_dl):
                 if isinstance(x, list):
                     x = x[0]
-                x = x.cuda()
+                x = x.to(self.device)
                 prediction = self.forward(x)
                 predictions.append(prediction.detach().cpu().numpy())
         predictions = np.concatenate(predictions).reshape(-1)
@@ -90,10 +92,39 @@ class DeepStackMLP(torch.nn.Module):
                 for i, x in enumerate(test_dl):
                     if isinstance(x, list):
                         x = x[0]
-                    x = x.cuda()
+                    x = x.to(self.device)
                     prediction = self.forward(x)
                     predictions.append(prediction.detach().cpu().numpy())
                 predictions = np.concatenate(predictions).reshape(-1)
+                if total_predictions == []:
+                    total_predictions = predictions
+                else:
+                    total_predictions = np.vstack([total_predictions, predictions])
+            mean = np.mean(total_predictions, axis=0)
+            std = np.std(total_predictions, axis=0)
+
+        return mean, std
+
+        # MC Dropout
+    def predict_uncertainty_2(self, X_test: pd.DataFrame, n_process):
+        """
+        :param test_dl: Test dataloader
+        :param n_process: number of times how many mc dropout process
+        :return:
+        """
+        self.eval()
+        self.train()
+        total_predictions = []
+        with torch.no_grad():
+            for _ in tqdm(range(n_process)):
+                predictions = []
+                input_value = torch.tensor(X_test.to_numpy(), dtype=torch.float32).to(self.device)
+                input_value = input_value.to(self.device)
+                prediction = self.forward(input_value)
+                predictions.append(prediction.detach().cpu().numpy())
+
+                predictions = np.concatenate(predictions).reshape(-1)
+
                 if total_predictions == []:
                     total_predictions = predictions
                 else:
@@ -226,14 +257,16 @@ class MLP(BaseDLModel):
                train_dl: DataLoader,
                valid_dl: DataLoader,
                len_cat: int,
-               len_num: int) -> DeepStackMLP:
+               len_num: int,
+               device: torch.device) -> DeepStackMLP:
 
         model = DeepStackMLP(
             len_cat=len_cat,
             len_num=len_num,
             dropout_ratio=self.config.model.params.dropout_ratio,
-            hidden_size=self.config.model.params.hidden_size
-        ).cuda()
+            hidden_size=self.config.model.params.hidden_size,
+            device=device
+        ).to(device)
 
         optimizer = torch.optim.Adam(
             model.parameters(),
@@ -260,7 +293,7 @@ class MLP(BaseDLModel):
             meter = AverageMeter()
             # train
             for i, (x, target) in enumerate(train_dl):
-                x, target = x.cuda(), target.cuda()
+                x, target = x.to(device), target.to(device)
                 optimizer.zero_grad()
                 loss = model.loss(model.forward(x), target.unsqueeze(1))
                 loss.backward()
@@ -275,7 +308,7 @@ class MLP(BaseDLModel):
             predictions = []
             with torch.no_grad():
                 for i, (x, target) in enumerate(valid_dl):
-                    x, target = x.cuda(), target.cuda()
+                    x, target = x.to(device), target.to(device)
                     prediction = model.forward(x)
                     loss = model.loss(prediction, target.unsqueeze(1))
                     predictions.append(prediction.detach().cpu().numpy())

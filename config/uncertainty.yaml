@@ -6,14 +6,14 @@
 
 
 defaults:
-  - dataset: dataset
-  - model: mlp
-  - features: features_with_dw_v2
-  - preprocessing: preprocessing
+  - dataset: dataset3
+  - model: mlp_3
+  - features: features_css
+  - preprocessing: preprocessing_v2
 
-representation:
-  path: res/models
-  result: transformer_dae_1024_dw_v2
+#representation:
+#  path: res/models
+#  result: transformer_dae_1024_dw_v2
 
 #representation:
 #  path: res/models

@@ -16,6 +16,8 @@ from omegaconf import DictConfig
 from sklearn.model_selection import StratifiedKFold
 from ..dataset.dataset import DataContainer
 from wandb.lightgbm import wandb_callback, log_summary
+import dill
+import torch
 
 @dataclass
 class ModelResult:
@@ -44,7 +46,8 @@ class BaseDAEModel(metaclass=ABCMeta):
         )
 
         with open(model_path, 'wb') as output:
-            pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+            # pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+            dill.dump(self.result, output)
 
     def train(self,
               train_cont: DataContainer) -> ModelResult:
@@ -80,7 +83,8 @@ class BaseDLModel(metaclass=ABCMeta):
                train_dl: DataLoader,
                valid_dl: DataLoader,
                len_cat: int,
-               len_num: int) -> NoReturn:
+               len_num: int,
+               device: torch.device) -> NoReturn:
         raise NotImplementedError
 
 
@@ -90,10 +94,12 @@ class BaseDLModel(metaclass=ABCMeta):
         )
 
         with open(model_path, 'wb') as output:
-            pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+            # pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+            dill.dump(self.result, output)
 
     def train(self,
-              train_cont: DataContainer):
+              train_cont: DataContainer,
+              device: torch.device):
 
         models = dict()
         scores = dict()
@@ -116,7 +122,8 @@ class BaseDLModel(metaclass=ABCMeta):
             model = self._train(train_dl=train_dl,
                                 valid_dl=valid_dl,
                                 len_cat=len_cat,
-                                len_num=len_num)
+                                len_num=len_num,
+                                device=device)
             models["fold_0"] = model
             pred = model.predict(valid_dl)
             scores = self.metric(pred, valid_dl.dataset.y)
@@ -168,7 +175,8 @@ class BaseDLModel(metaclass=ABCMeta):
             model = self._train(train_dl=train_dl,
                                 valid_dl=valid_dl,
                                 len_cat=len_cat,
-                                len_num=len_num)
+                                len_num=len_num,
+                                device=device)
             models[f"fold_{fold}"] = model
 
             # validation score

@@ -219,3 +219,5 @@ total_features:
   - PE0000045
   - SC0000018
   - SC0000033
+  - proba_lgbm
+  - proba_catboost

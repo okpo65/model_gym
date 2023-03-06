@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 import hydra
+import torch
 from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 
@@ -49,6 +50,7 @@ def _main(cfg: DictConfig):
 
     train_cont, test_cont = preprocessor.perform()
 
+    device = torch.device(cfg.dataset.device)
 
     # model load
     model_path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
@@ -58,13 +60,13 @@ def _main(cfg: DictConfig):
     df_before.to_parquet(cfg.output.before_path)
 
     # dae reconstruction
-    reconstruted_test_cont = inference_dae_reconstruction(dae_results, test_cont)
+    reconstruted_test_cont = inference_dae_reconstruction(dae_results, test_cont, device)
     df_after, _ = reconstruted_test_cont.get_dataframe()
     df_after.columns = [f"{c}_cat" for c in df_after.columns.tolist()[:reconstruted_test_cont.len_cat]] + [f"{c}" for c in num_features]
     df_after.to_parquet(cfg.output.after_path)
 
     # dae representation
-    representation_test_cont = inference_dae(dae_results, test_cont)
+    representation_test_cont = inference_dae(dae_results, test_cont, device)
     df_representation, _ = representation_test_cont.get_dataframe()
     df_representation.columns = [f"{c}" for c in df_representation.columns]
     df_representation.to_parquet(cfg.output.representation_path)

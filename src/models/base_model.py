@@ -36,7 +36,8 @@ class BaseDAEModel(metaclass=ABCMeta):
                train_dl: DataLoader,
                valid_dl: DataLoader,
                len_cat: int,
-               len_num: int) -> NoReturn:
+               len_num: int,
+               device: torch.device) -> NoReturn:
         raise NotImplementedError
 
     def save_model(self) -> NoReturn:
@@ -46,11 +47,12 @@ class BaseDAEModel(metaclass=ABCMeta):
         )
 
         with open(model_path, 'wb') as output:
-            # pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
-            dill.dump(self.result, output)
+            pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+            # dill.dump(self.result, output)
 
     def train(self,
-              train_cont: DataContainer) -> ModelResult:
+              train_cont: DataContainer,
+              device: torch.device) -> ModelResult:
         train_dl, valid_dl = train_cont.get_dae_dataloader(batch_size=self.config.model.batch_size,
                                                            num_workers=self.config.dataset.num_workers)
         len_cat, len_num = train_cont.len_cat, train_cont.len_num
@@ -61,7 +63,11 @@ class BaseDAEModel(metaclass=ABCMeta):
                    config=self.config.model,
                    reinit=True)
 
-        model = self._train(train_dl, valid_dl, len_cat, len_num)
+        model = self._train(train_dl,
+                            valid_dl,
+                            len_cat,
+                            len_num,
+                            device)
 
         self.result = ModelResult(
             oof_preds=np.array([]),
@@ -230,7 +236,8 @@ class BaseModel(metaclass=ABCMeta):
             pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
 
     def train(self,
-              train_cont: DataContainer) -> ModelResult:
+              train_cont: DataContainer,
+              device: torch.device) -> ModelResult:
         """
         :param train_x: train dataset
         :param train_y: target dataset

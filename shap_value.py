@@ -3,6 +3,7 @@ from pathlib import Path
 
 import hydra
 import pandas as pd
+import torch
 from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 import tqdm
@@ -51,13 +52,13 @@ def _main(cfg: DictConfig):
                                 cat_features=cat_features)
 
     train_cont, test_cont = preprocessor.perform()
-
+    device = torch.device(cfg.dataset.device)
     # using representation learning features
     if representation_key in cfg.keys():
         model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
         # model load
         dae_results = load_model(cfg, model_path)
-        test_cont = inference_dae(dae_results, test_cont)
+        test_cont = inference_dae(dae_results, test_cont, device)
 
     # get shapley value list
     shap_value_list = inference_shap_v2(results, test_cont)

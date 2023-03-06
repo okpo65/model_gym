@@ -14,19 +14,15 @@
 #  result: deepstack_dae_1500_dw
 
 defaults:
-  - dataset: dataset3
-  - model: mlp_3
-  - features: features_css
-  - preprocessing: preprocessing_v2
+  - dataset: dataset_dae
+  - model: deepstack_dae
+  - features: features_jb_v2
+  - preprocessing: preprocessing_for_ml_v3
 
 #representation:
 #  path: res/models
-#  result: deepstack_dae_4500_dw_v2
+#  result: deepstack_dae_4500_standard
 
 output:
   path: res/output
-  name: ${model.result}_test_2.csv
-
-#representation:
-#  path: res/models
-#  result: transformer_dae_1024_dw_v2
+  name: ${model.result}_test.csv

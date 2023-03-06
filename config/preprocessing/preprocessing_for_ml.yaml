@@ -15,6 +15,5 @@ numerical:
 
   replace_null: 0
 
-
-
+categorical: one_hot
 

@@ -16,7 +16,7 @@ earlystopper:
 
 noise_ratio:
   num: 0.3
-  cat: 0.8
+  cat: 0.5
 
 batch_size: 512
 iterations: 3000
@@ -24,9 +24,9 @@ iterations: 3000
 eval_verbose: 1
 
 loss_weight:
-  cat: 0.3
-  num: 0.7
+  cat: 0.2
+  num: 0.8
 
 path: res/models
 name: deepstack_dae
-result: deepstack_dae_dataset3_4500_dw_v2
+result: deepstack_dae_jb_v2_4500_standard

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import hydra
 import pandas as pd
+import torch
 from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 
@@ -52,20 +53,22 @@ def _main(cfg: DictConfig):
                                 cat_features=cat_features)
 
     train_cont, test_cont = preprocessor.perform()
+    # test_cont.get_dataframe()[0].to_parquet('../CSS/dataset/test/df_dae_03test_2_proxy_processed.parquet')
 
+    device = torch.device(cfg.dataset.device)
     # using representation learning features
     if representation_key in cfg.keys():
         model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
         # model load
         dae_results = load_model(cfg, model_path)
-        test_cont = inference_dae(dae_results, test_cont)
+        test_cont = inference_dae(dae_results, test_cont, device)
 
     # infer test dataset
     model_name = cfg.model.name
     if model_name == __all_model__.mlp:
         test_dl = test_cont.get_test_dataloader(batch_size=cfg.model.batch_size,
                                                 num_workers=cfg.dataset.num_workers)
-        preds = inference_mlp(results, test_dl)
+        preds = inference_mlp(results, test_dl, device)
     else:
         X_test, _ = test_cont.get_dataframe()
         preds = inference(results, X_test)

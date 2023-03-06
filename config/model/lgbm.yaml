@@ -18,7 +18,7 @@ params:
 
 path: res/models
 name: lgbm
-result: lgbm_10fold_v2_dw_v2 # lgbm_10fold_v2_dw_v2
+result: lgbm_5fold_dae_standard_jb
 
 num_boost_round: 15000
 verbose: 500

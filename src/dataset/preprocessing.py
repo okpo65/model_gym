@@ -43,6 +43,10 @@ class Preprocessor(object):
         self.cat_features = cat_features
         self.num_features = num_features
 
+        self.X_train = self.X_train.fillna(0)
+        if self.X_test is not None:
+            self.X_test = self.X_test.fillna(0)
+
     def perform(self) -> Tuple[DataContainer, Optional[DataContainer]]:
         # numerical features preprocessing
         numerical_keys = self.cfg.numerical.keys() if 'numerical' in self.cfg.keys() else {}

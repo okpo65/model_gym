@@ -14,7 +14,8 @@ class DeepStackDAE(torch.nn.Module):
                  len_cat,
                  len_num,
                  hidden_size,
-                 emphasis):
+                 emphasis,
+                 device):
         super().__init__()
 
         post_encoding_input_size = len_cat + len_num
@@ -24,18 +25,18 @@ class DeepStackDAE(torch.nn.Module):
             torch.nn.Linear(in_features=post_encoding_input_size, out_features=self.hidden_size),
             torch.nn.ReLU(),
             torch.nn.BatchNorm1d(self.hidden_size)
-        )
+        ).to(device)
         self.layer_2 = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size),
             torch.nn.ReLU(),
             torch.nn.BatchNorm1d(self.hidden_size)
-        )
+        ).to(device)
         self.layer_3 = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size),
             torch.nn.ReLU(),
             torch.nn.BatchNorm1d(self.hidden_size)
-        )
-        self.linear_4 = torch.nn.Linear(in_features=self.hidden_size, out_features=post_encoding_input_size)
+        ).to(device)
+        self.linear_4 = torch.nn.Linear(in_features=self.hidden_size, out_features=post_encoding_input_size).to(device)
 
         self.len_cat = len_cat
         self.len_num = len_num
@@ -264,7 +265,8 @@ class DAE(BaseDAEModel):
                 len_cat=len_cat,
                 len_num=len_num,
                 hidden_size=self.config.model.params.hidden_size,
-                emphasis=self.config.model.params.emphasis
+                emphasis=self.config.model.params.emphasis,
+                device=device
             ).to(device)
         elif model_name == 'bottleneck_dae':
             model = DeepBottleneck(
@@ -294,9 +296,9 @@ class DAE(BaseDAEModel):
                train_dl: DataLoader,
                valid_dl: DataLoader,
                len_cat: int,
-               len_num: int) -> DeepStackDAE:
+               len_num: int,
+               device: torch.device) -> DeepStackDAE:
 
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # model 가져오기
         model = self._get_model(len_cat,
                                 len_num,
@@ -321,7 +323,6 @@ class DAE(BaseDAEModel):
         swap_probas = sum([[p] * r for p, r in zip(probas, repeats)], [])
         noise_maker = SwapNoiseMasker(swap_probas)
         best_score = float('inf')
-
         for epoch in tqdm(range(self.config.model.iterations)):
             model.train()
             meter = AverageMeter()

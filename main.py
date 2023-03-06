@@ -42,30 +42,24 @@ def _main(cfg: DictConfig):
     X_train, y_train = load_train_data(cfg)
 
     # preprocessing
-    # cat_features = [*cfg.features.cat_features] if 'cat_features' in cfg.features.keys() else []
-    # num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
-    #
-    # preprocessor = Preprocessor(cfg.preprocessing,
-    #                             X_train,
-    #                             y_train,
-    #                             num_features=num_features,
-    #                             cat_features=cat_features)
-    # train_cont, _ = preprocessor.perform()
-    # print('-------------\n Started Training \n-----------', train_cont.get_dataframe())
+    cat_features = [*cfg.features.cat_features] if 'cat_features' in cfg.features.keys() else []
+    num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
 
+    preprocessor = Preprocessor(cfg.preprocessing,
+                                X_train,
+                                y_train,
+                                num_features=num_features,
+                                cat_features=cat_features)
+    train_cont, _ = preprocessor.perform()
+    print('-------------\n Started Training \n-----------', train_cont.get_dataframe())
+    device = torch.device(cfg.dataset.device)
     # using Representation Learning Features
-    # if representation_key in cfg.keys():
-    #     model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
-    #     # model load
-    #     results = load_model(cfg, model_path)
-    #     train_cont = inference_dae(results, train_cont)
+    if representation_key in cfg.keys():
+        model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
+        # model load
+        results = load_model(cfg, model_path)
+        train_cont = inference_dae(results, train_cont, device)
 
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    device = torch.device('cpu')
-    train_cont = DataContainer(df=X_train,
-                               df_y=y_train,
-                               len_cat=0,
-                               len_num=len(X_train.columns.tolist()))
     # model training
     torch.set_num_threads(cfg.dataset.num_workers)
     model_name = cfg.model.name

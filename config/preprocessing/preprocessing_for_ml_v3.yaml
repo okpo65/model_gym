@@ -1,0 +1,19 @@
+numerical:
+  scaler:
+    name: standard # standard, minmax, quantil_transformer, label
+    n_quantiles: 3000
+    random_state: 42
+    output_distribution: normal # uniform, normal
+
+#  binning:
+#    strategy: quantile # uniform, kmeans
+#    n_bins: 3000
+
+  clipping:
+    upper_bound: 0.01
+    lower_bound: 0.01
+
+  replace_null: 0
+
+categorical: one_hot
+

@@ -1,0 +1,5 @@
+defaults:
+  - dataset: dataset_dae
+  - model: deepstack_dae
+  - features: features_css
+  - preprocessing: preprocessing_for_ml

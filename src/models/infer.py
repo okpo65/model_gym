@@ -70,7 +70,8 @@ def inference_feature_importance(result: ModelResult, cat_features, num_features
     return df_fi
 
 def inference_mlp(result: ModelResult,
-                  test_dl: DataLoader) -> np.ndarray:
+                  test_dl: DataLoader,
+                  device: torch.device) -> np.ndarray:
     """
     :param result: ModelResult Object
     :param test_dl: test dataloader
@@ -81,23 +82,25 @@ def inference_mlp(result: ModelResult,
     folds = len(result.models)
     preds_proba = np.zeros((test_dl.dataset.x.shape[0],))
     for model in tqdm(result.models.values(), total=folds):
+        _model = model.to(device)
         preds_proba += (
-            model.predict(test_dl) / folds
+            _model.predict(test_dl) / folds
         )
     assert len(preds_proba) == len(test_dl.dataset.x)
     return preds_proba
 
 def inference_dae(result: ModelResult,
-                  train_cont: DataContainer) -> DataContainer:
+                  train_cont: DataContainer,
+                  device: torch.device) -> DataContainer:
     """
     :param result: ModelResult Object
     :param train_cont: DataContainer to be DAE representation features
     :return: new DataContainer with representation features
     """
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     test_dl = train_cont.get_test_dataloader(batch_size=512,
                                              num_workers=64)
     model = list(result.models.values())[0]
+    model = model.to(device)
 
     torch_test = []
     for i, x in enumerate(test_dl):
@@ -115,13 +118,13 @@ def inference_dae(result: ModelResult,
 
 
 def inference_dae_reconstruction(result: ModelResult,
-                                 train_cont: DataContainer) -> DataContainer:
+                                 train_cont: DataContainer,
+                                 device: torch.device) -> DataContainer:
     """
     :param result: ModelResult Object
     :param train_cont: dataloader to be DAE reconstructed data
     :return: new dataContainer with reconstructed data
     """
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     test_dl = train_cont.get_test_dataloader(batch_size=512,
                                              num_workers=64)
     model = list(result.models.values())[0]
@@ -165,7 +168,8 @@ def shap_feature_ranking_2(df, shap_values, columns=[]):
     return df_ranking
 
 def inference_shap(result: ModelResult,
-                   test_cont: DataContainer):
+                   test_cont: DataContainer,
+                   device: torch.device):
     folds = len(result.models)
     shap_value_list = []
     for model in tqdm(result.models.values(), total=folds):
@@ -178,7 +182,7 @@ def inference_shap(result: ModelResult,
                 expected_value = expected_value[1]
 
         else:
-            X_test_torch = torch.Tensor(X_test.values).cuda() #torch.from_numpy(X_test.values).cuda().float()
+            X_test_torch = torch.Tensor(X_test.values).to(device)
             explainer = shap.DeepExplainer(model, X_test_torch)
             shap_values = explainer.shap_values(X_test_torch)
             shap_values = np.array(shap_values)

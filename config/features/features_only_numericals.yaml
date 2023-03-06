@@ -219,19 +219,19 @@ total_features:
   - SC0000018
   - SC0000033
   # DW features
-  - interest_rate_max
-  - interest_rate_mean
-  - amount_mean
-  - opening_date_days_last
-  - amount_last
-  - amount_min
-  - opening_date_days_mean
-  - amount_max
-  - monthly_repayment_amount_min
-  - amount_std
-  - monthly_repayment_amount_last
-  - opening_date_days_min
-  - interest_rate_last
-  - interest_rate_std
-  - opening_date_days_first
-  - total_nice_46_count
+#  - interest_rate_max
+#  - interest_rate_mean
+#  - amount_mean
+#  - opening_date_days_last
+#  - amount_last
+#  - amount_min
+#  - opening_date_days_mean
+#  - amount_max
+#  - monthly_repayment_amount_min
+#  - amount_std
+#  - monthly_repayment_amount_last
+#  - opening_date_days_min
+#  - interest_rate_last
+#  - interest_rate_std
+#  - opening_date_days_first
+#  - total_nice_46_count

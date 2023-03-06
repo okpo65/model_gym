@@ -1,0 +1,12 @@
+root: /home/peoplefund/workspace/jihwan-css/CSS
+
+train: ${dataset.root}/dataset/train/df_12_to_4_light_csv.csv
+test: ${dataset.root}/dataset/test/df_05_jb_light.parquet
+
+target_name: css_target
+
+seed: 42
+
+num_workers: 32
+
+device: 'cuda:3'

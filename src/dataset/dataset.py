@@ -139,8 +139,10 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame,
     :return: shuffled train dataset
     """
     feat_list = [*config.features.total_features]
-
-    X_train = pd.read_parquet(config.dataset.train)
+    if config.dataset.train.split('.')[:-1] == 'parquet':
+        X_train = pd.read_parquet(config.dataset.train)
+    else:
+        X_train = pd.read_csv(config.dataset.train)
     # random shuffle
     X_train = X_train.sample(frac=1.0).reset_index(drop=True)
     y_train = X_train[config.dataset.target_name]
@@ -155,7 +157,10 @@ def load_test_data(config: DictConfig) -> Tuple[pd.DataFrame,
     """
     feat_list = [*config.features.total_features]
 
-    X_test = pd.read_parquet(config.dataset.test)
+    if config.dataset.test.split('.')[:-1] == 'parquet':
+        X_test = pd.read_parquet(config.dataset.test)
+    else:
+        X_test = pd.read_csv(config.dataset.test)
 
     target_name = config.dataset.target_name
     if target_name in X_test.columns:

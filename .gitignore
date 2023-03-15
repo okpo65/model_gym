@@ -1,0 +1,5 @@
+res/*
+dataset/*
+*.parquet
+*.csv
+.DS_Store

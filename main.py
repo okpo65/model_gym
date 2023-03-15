@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import torch
 from hydra.utils import get_original_cwd
@@ -14,6 +15,7 @@ from src.utils.utils import DictX
 from omegaconf import DictConfig
 from src.models.infer import inference_dae, load_model
 import wandb
+
 
 __all_model__ = DictX(
     catboost='catboost',
@@ -34,7 +36,8 @@ def _main(cfg: DictConfig):
 
     Control the overall course of Learning
     """
-
+    # os.environ["WANDB_MODE"] = "online"
+    
     # wandb login
     wandb.login(key=WANDB_KEY)
 
@@ -57,7 +60,7 @@ def _main(cfg: DictConfig):
     if representation_key in cfg.keys():
         model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
         # model load
-        results = load_model(cfg, model_path)
+        results = load_model(model_path)
         train_cont = inference_dae(results, train_cont, device)
 
     # model training

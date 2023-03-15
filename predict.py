@@ -35,7 +35,7 @@ def _main(cfg: DictConfig):
     """
     # model load
     path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
-    results = load_model(cfg, path)
+    results = load_model(path)
 
     # data load
     X_train, y_train = load_train_data(cfg)
@@ -60,7 +60,7 @@ def _main(cfg: DictConfig):
     if representation_key in cfg.keys():
         model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
         # model load
-        dae_results = load_model(cfg, model_path)
+        dae_results = load_model(model_path)
         test_cont = inference_dae(dae_results, test_cont, device)
 
     # infer test dataset

@@ -34,7 +34,7 @@ def _main(cfg: DictConfig):
     """
     # model load
     path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
-    results = load_model(cfg, path)
+    results = load_model(path)
 
     # data load
     X_train, y_train = load_train_data(cfg)
@@ -57,15 +57,12 @@ def _main(cfg: DictConfig):
     if representation_key in cfg.keys():
         model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
         # model load
-        dae_results = load_model(cfg, model_path)
+        dae_results = load_model(model_path)
         test_cont = inference_dae(dae_results, test_cont, device)
 
     # get shapley value list
     shap_value_list = inference_shap_v2(results, test_cont)
     shap_value_list.to_parquet('df_ranking_test.parquet')
-    # for shap in shap_value_list:
-    #     print(shap, len(shap[0]), len(shap[1]))
-    #     print(len(shap[0][0]), len(shap[1][0]))
 
 if __name__ == "__main__":
     _main()

@@ -15,14 +15,14 @@
 
 defaults:
   - dataset: dataset_dae
-  - model: deepstack_dae
+  - model: mlp
   - features: features_jb_v2
-  - preprocessing: preprocessing_for_ml_v3
+  - preprocessing: preprocessing_for_ml_v4
 
-#representation:
-#  path: res/models
-#  result: deepstack_dae_4500_standard
+representation:
+  path: res/models
+  result: bottleneck_dae_1024_50_standard
 
 output:
   path: res/output
-  name: ${model.result}_test.csv
+  name: ${model.result}_jb_test.csv

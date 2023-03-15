@@ -18,7 +18,7 @@ params:
 
 path: res/models
 name: lgbm
-result: lgbm_5fold_dae_standard_jb
+result: lgbm_dae_standard_jb_v2_no_cat
 
 num_boost_round: 15000
 verbose: 500

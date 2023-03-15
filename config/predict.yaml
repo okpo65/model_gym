@@ -7,13 +7,13 @@
 
 defaults:
   - dataset: dataset_dae
-  - model: lgbm
-  - features: features_jb
+  - model: mlp
+  - features: features_jb_v2
   - preprocessing: preprocessing_for_ml_v3
 
 representation:
   path: res/models
-  result: deepstack_dae_4500_standard
+  result: deepstack_dae_4500_standard_jb_no_cat
 
 output:
   path: res/output

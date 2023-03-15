@@ -1,7 +1,9 @@
 root: /home/peoplefund/workspace/jihwan-css/CSS
 
-train: ${dataset.root}/dataset/train/df_12_to_4_light_csv.csv
+train: ${dataset.root}/dataset/train/df_12_to_4_light.parquet
 test: ${dataset.root}/dataset/test/df_05_jb_light.parquet
+
+save_path: ${dataset.root}/dataset/test/df_05_jb_light_saved.csv
 
 target_name: css_target
 

@@ -1,0 +1,14 @@
+root: /Users/jihwan/Desktop/ModelStorage
+
+train: ${dataset.root}/dataset/df_12_to_4_light.parquet
+test: ${dataset.root}/dataset/df_
+
+save_path: ${dataset.root}/dataset/jb_testdata_202206_saved.csv
+
+target_name: css_target
+
+seed: 42
+
+num_workers: 3
+
+device: 'cpu'

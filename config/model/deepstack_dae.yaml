@@ -29,4 +29,4 @@ loss_weight:
 
 path: res/models
 name: deepstack_dae
-result: deepstack_dae_jb_v2_4500_standard
+result: deepstack_dae_4500_standard_jb_no_cat

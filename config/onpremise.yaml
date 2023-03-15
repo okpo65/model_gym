@@ -1,0 +1,9 @@
+
+defaults:
+  - dataset: dataset_dae
+  - features: features_jb_v2
+  - preprocessing: preprocessing_for_ml_v3
+
+output:
+  path: res/output
+  name: ${model.result}_onpremise_test.csv

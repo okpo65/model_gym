@@ -1,4 +1,4 @@
-folds: 10
+folds: 1
 params:
   booster: dart
   learning_rate: 0.005
@@ -8,6 +8,7 @@ params:
   max_depth: 30
   tree_method: gpu_hist
   eval_metric: logloss
+  gpu_id: 5
   early_stopping_rounds: 100
   seed: 42
   verbose: True
@@ -16,6 +17,6 @@ name: xgboost
 num_boost_round: 15000
 
 path: res/models
-result: xgboost_10fold_dw_v2
+result: xgboost_test
 seed: 42
 verbose: 500

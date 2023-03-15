@@ -6,10 +6,18 @@
 
 
 defaults:
-  - dataset: dataset
-  - model: lgbm
-  - features: features_with_dw_v2
-  - preprocessing: preprocessing_for_ml
+  - dataset: dataset_dae
+  - model: mlp
+  - features: features_jb_v2
+  - preprocessing: preprocessing_for_ml_v3
+
+representation:
+  path: res/models
+  result: deepstack_dae_4500_standard_jb_no_cat
+
+output:
+  path: res/output
+  name: ${model.result}_test.csv
 
 #representation:
 #  path: res/models

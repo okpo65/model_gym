@@ -1,6 +1,6 @@
 params:
-  hidden_size: 512
-  bottleneck_size: 64
+  hidden_size: 1024
+  bottleneck_size: 50
   emphasis: 0.8
   dropout_ratio: 0.2
 
@@ -13,22 +13,22 @@ scheduler:
 
 earlystopper:
   min_delta: 1e-7
-  patience: 50
+  patience: 30
   verbose: 1
 
 noise_ratio:
-  num: 0.25
+  num: 0.2
   cat: 0.25
 
-batch_size: 512
+batch_size: 1024
 iterations: 3000
 
 eval_verbose: 1
 
 loss_weight:
   cat: 0.2
-  num: 0.8
+  num: 0.9
 
 path: res/models
 name: bottleneck_dae
-result: bottleneck_dae_64_dw
+result: bottleneck_dae_1024_50_standard

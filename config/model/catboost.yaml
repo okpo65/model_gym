@@ -1,16 +1,18 @@
-folds: 10
+folds: 1
 params:
 #  learning_rate: 0.001
   iterations: 15000
 #  max_depth: 7
   eval_metric: AUC
   loss_function: Logloss
+  task_type: GPU
+#  devices: 5
 #  l2_leaf_reg: 70
   early_stopping_rounds: 100
 
 name: catboost
 
 path: res/models
-result: catboost_10fold_dw
+result: catboost_test
 seed: 42
 verbose: 500

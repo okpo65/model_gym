@@ -16,7 +16,7 @@ scheduler:
 
 earlystopper:
   min_delta: 1e-7
-  patience: 20
+  patience: 10
   verbose: 1
 
 batch_size: 512
@@ -26,4 +26,4 @@ eval_verbose: 1
 
 path: res/models
 name: mlp
-result: mlp_4500dae_standard_jb # mlp_256hs_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_64dae_256hs_dw
+result: mlp_4500dae_standard_jb_v2_no_cat # mlp_256hs_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_transformer_dae_1024_dw_v2 # mlp_64dae_256hs_dw

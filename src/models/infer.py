@@ -1,3 +1,4 @@
+import io
 import pickle
 from pathlib import Path
 
@@ -18,17 +19,23 @@ from ..dataset.dataset import DataContainer
 from .base_model import ModelResult
 
 
-def load_model(config: DictConfig, model_name: str) -> ModelResult:
+class CPU_Unpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module == 'torch.storage' and name == '_load_from_bytes':
+            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+        else: return super().find_class(module, name)
+
+def load_model(model_path: str) -> ModelResult:
     """
     :param config: Hydra config
     :param model_name: model_name
     :return: ModelResult Object
     """
 
-    model_path = Path(get_original_cwd()) / config.model.path / model_name
-
+    # model_path = Path(get_original_cwd()) / config.model.path / model_name
+    #with torch.loading_context(map_location='cpu'):
     with open(model_path, "rb") as output:
-        model_result = pickle.load(output)
+        model_result = CPU_Unpickler(output).load()# pickle.load(output)
 
     return model_result
 
@@ -83,8 +90,18 @@ def inference_mlp(result: ModelResult,
     preds_proba = np.zeros((test_dl.dataset.x.shape[0],))
     for model in tqdm(result.models.values(), total=folds):
         _model = model.to(device)
+        _model.eval()
+        predictions = []
+        with torch.no_grad():
+            for i, x in enumerate(test_dl):
+                if isinstance(x, list):
+                    x = x[0]
+                x = x.to(device)
+                prediction = _model.forward(x)
+                predictions.append(prediction.detach().cpu().numpy())
+        predictions = np.concatenate(predictions).reshape(-1)
         preds_proba += (
-            _model.predict(test_dl) / folds
+            predictions / folds
         )
     assert len(preds_proba) == len(test_dl.dataset.x)
     return preds_proba
@@ -97,8 +114,8 @@ def inference_dae(result: ModelResult,
     :param train_cont: DataContainer to be DAE representation features
     :return: new DataContainer with representation features
     """
-    test_dl = train_cont.get_test_dataloader(batch_size=512,
-                                             num_workers=64)
+    test_dl = train_cont.get_test_dataloader(batch_size=64,
+                                             num_workers=3)
     model = list(result.models.values())[0]
     model = model.to(device)
 
@@ -212,9 +229,10 @@ def inference_shap_v2(result: ModelResult,
                 )
         return preds_proba
 
-    X_test = test_cont.get_dataframe()[0].iloc[:10]
-    explainer = shap.KernelExplainer(predict_proba, X_test, link='logit')
-    shap_values = explainer.shap_values(X_test, nsamples=5)
+    X_test = test_cont.get_dataframe()[0].iloc[:100]
+    print("X_test!!", X_test)
+    explainer = shap.KernelExplainer(predict_proba, X_test, link='logit', nsamples=100)
+    shap_values = explainer.shap_values(X_test)
     df_ranking = shap_feature_ranking_2(X_test, shap_values)
     return df_ranking
 

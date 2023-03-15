@@ -32,26 +32,26 @@ class DeepStackMLP(torch.nn.Module):
             torch.nn.ReLU(),
             torch.nn.BatchNorm1d(self.hidden_size),
             torch.nn.Dropout(self.dropout_ratio)
-        )
+        ).to(device)
         self.layer_2 = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.hidden_size, out_features=self.half_hidden_size),
             torch.nn.ReLU(),
             torch.nn.BatchNorm1d(self.half_hidden_size),
             torch.nn.Dropout(self.dropout_ratio)
-        )
+        ).to(device)
         self.layer_3 = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.half_hidden_size, out_features=self.half_hidden_size),
             torch.nn.ReLU(),
             torch.nn.BatchNorm1d(self.half_hidden_size),
             torch.nn.Dropout(self.dropout_ratio)
-        )
+        ).to(device)
         self.layer_4 = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.half_hidden_size, out_features=int(self.half_hidden_size/2)),
             torch.nn.ReLU(),
             torch.nn.BatchNorm1d(int(self.half_hidden_size/2)),
             torch.nn.Dropout(self.dropout_ratio)
-        )
-        self.last_linear = torch.nn.Linear(self.half_hidden_size, 1)
+        ).to(device)
+        self.last_linear = torch.nn.Linear(self.half_hidden_size, 1).to(device)
 
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound

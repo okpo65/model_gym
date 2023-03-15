@@ -7,6 +7,7 @@ import copy
 from torch.utils.data import Dataset, DataLoader
 from ..utils.utils import SwapNoiseMasker, EarlyStopping, AverageMeter
 from .base_model import BaseDAEModel
+from .loss.RMSELoss import RMSELoss
 import wandb
 
 class DeepStackDAE(torch.nn.Module):
@@ -70,7 +71,10 @@ class DeepStackDAE(torch.nn.Module):
 
         cat_loss = weights[0] * torch.mul(w_cats, torch.nn.functional.binary_cross_entropy_with_logits(x_cats, y_cats, reduction='none'))
         num_loss = weights[1] * torch.mul(w_nums, torch.nn.functional.mse_loss(x_nums, y_nums, reduction='none'))
-        reconstruction_loss = cat_loss.mean() + num_loss.mean()
+        if self.len_cat == 0:
+            reconstruction_loss = num_loss.mean()
+        else:
+            reconstruction_loss = cat_loss.mean() + num_loss.mean()
         return reconstruction_loss
 
 class DeepBottleneck(torch.nn.Module):
@@ -80,7 +84,8 @@ class DeepBottleneck(torch.nn.Module):
                  len_cat,
                  len_num,
                  dropout_ratio,
-                 emphasis=1):
+                 emphasis,
+                 device):
         super().__init__()
         self.hidden_size = hidden_size
         self.len_cat = len_cat
@@ -88,46 +93,62 @@ class DeepBottleneck(torch.nn.Module):
         self.emphasis = emphasis
         self.bottleneck_size = bottleneck_size
         self.dropout_ratio = dropout_ratio
+        self.device = device
         post_encoding_input_size = len_cat + len_num
         half_hidden_size = int(hidden_size / 2)
 
-        self.batch_norm_1 = torch.nn.BatchNorm1d(hidden_size)
-        self.batch_norm_2 = torch.nn.BatchNorm1d(half_hidden_size)
-        self.dropout = torch.nn.Dropout(dropout_ratio)
-
         self.encoder_1 = torch.nn.Sequential(
             torch.nn.Linear(in_features=post_encoding_input_size, out_features=hidden_size),
+            torch.nn.BatchNorm1d(hidden_size),
             torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(hidden_size)
-        )
+            torch.nn.Dropout(self.dropout_ratio)
+        ).to(device)
         self.encoder_2 = torch.nn.Sequential(
             torch.nn.Linear(in_features=hidden_size, out_features=half_hidden_size),
+            torch.nn.BatchNorm1d(half_hidden_size),
             torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(half_hidden_size)
-        )
-        self.bottleneck_size = torch.nn.Linear(in_features=half_hidden_size, out_features=bottleneck_size)
+            torch.nn.Dropout(self.dropout_ratio)
+        ).to(device)
+        self.encoder_3 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=half_hidden_size, out_features=half_hidden_size),
+            torch.nn.BatchNorm1d(half_hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(self.dropout_ratio)
+        ).to(device)
+        self.bottleneck_size = torch.nn.Linear(in_features=half_hidden_size, out_features=bottleneck_size).to(device)
         self.decoder_1 = torch.nn.Sequential(
             torch.nn.Linear(in_features=bottleneck_size, out_features=half_hidden_size),
+            torch.nn.BatchNorm1d(half_hidden_size),
             torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(half_hidden_size)
-        )
+            torch.nn.Dropout(self.dropout_ratio)
+        ).to(device)
         self.decoder_2 = torch.nn.Sequential(
             torch.nn.Linear(in_features=half_hidden_size, out_features=hidden_size),
+            torch.nn.BatchNorm1d(hidden_size),
             torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(hidden_size)
-        )
+            torch.nn.Dropout(self.dropout_ratio)
+        ).to(device)
+        self.decoder_3 = torch.nn.Sequential(
+            torch.nn.Linear(in_features=hidden_size, out_features=hidden_size),
+            torch.nn.BatchNorm1d(hidden_size),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(self.dropout_ratio)
+        ).to(device)
         self.reconstruct = torch.nn.Sequential(
             torch.nn.Linear(in_features=hidden_size, out_features=post_encoding_input_size),
+            torch.nn.BatchNorm1d(post_encoding_input_size),
             torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(post_encoding_input_size)
-        )
+            torch.nn.Dropout(self.dropout_ratio)
+        ).to(device)
 
     def forward_pass(self, x):
         x = self.encoder_1(x)
         x = self.encoder_2(x)
+        x = self.encoder_3(x)
         x = b = self.bottleneck_size(x)
         x = self.decoder_1(x)
         x = self.decoder_2(x)
+        x = self.decoder_3(x)
         x = self.reconstruct(x)
         return [b, x]
     def forward(self, x):
@@ -137,7 +158,7 @@ class DeepBottleneck(torch.nn.Module):
         return self.forward_pass(x)[0]
 
     def reconstructed_feature(self, x):
-        return self.forward(x)[-1]
+        return self.forward(x)
 
     def split(self, t):
         return torch.split(t, [self.len_cat, self.len_num], dim=1)
@@ -153,7 +174,11 @@ class DeepBottleneck(torch.nn.Module):
         # focal_loss = FocalLoss(size_average=False)
         cat_loss = weights[0] * torch.mul(w_cats, torch.nn.functional.binary_cross_entropy_with_logits(x_cats, y_cats, reduction='none'))
         num_loss = weights[1] * torch.mul(w_nums, torch.nn.functional.mse_loss(x_nums, y_nums, reduction='none'))
-        reconstruction_loss = cat_loss.mean() + num_loss.mean()
+        # num_loss = weights[1] * torch.mul(w_nums, RMSELoss()(x_nums, y_nums))
+        if self.len_cat == 0:
+            reconstruction_loss = num_loss.mean()
+        else:
+            reconstruction_loss = cat_loss.mean() + num_loss.mean()
         return reconstruction_loss
 
 class TransformerEncoder(torch.nn.Module):
@@ -275,7 +300,8 @@ class DAE(BaseDAEModel):
                 hidden_size=self.config.model.params.hidden_size,
                 bottleneck_size=self.config.model.params.bottleneck_size,
                 dropout_ratio=self.config.model.params.dropout_ratio,
-                emphasis=self.config.model.params.emphasis
+                emphasis=self.config.model.params.emphasis,
+                device=device
             ).to(device)
         elif model_name == 'transformer_dae':
             model = TransformerAutoEncoder(

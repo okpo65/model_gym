@@ -101,6 +101,7 @@ class DataContainer():
                              shuffle=False,
                              pin_memory=True,
                              drop_last=False)
+
         return test_x
 
     def get_dataframe(self):
@@ -139,7 +140,7 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame,
     :return: shuffled train dataset
     """
     feat_list = [*config.features.total_features]
-    if config.dataset.train.split('.')[:-1] == 'parquet':
+    if config.dataset.train.split('.')[-1] == 'parquet':
         X_train = pd.read_parquet(config.dataset.train)
     else:
         X_train = pd.read_csv(config.dataset.train)
@@ -149,18 +150,22 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame,
 
     return X_train[feat_list], y_train
 
-def load_test_data(config: DictConfig) -> Tuple[pd.DataFrame,
-                                                Optional[pd.Series]]:
+def load_test_data(config: DictConfig,
+                   test_path: Optional[str]=None) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
     """
     :param config: dataset config
     :return: test dataset
     """
     feat_list = [*config.features.total_features]
-
-    if config.dataset.test.split('.')[:-1] == 'parquet':
-        X_test = pd.read_parquet(config.dataset.test)
+    if test_path is not None:
+        test_data_path = test_path
     else:
-        X_test = pd.read_csv(config.dataset.test)
+        test_data_path = config.dataset.test
+
+    if test_data_path.split('.')[-1] == 'parquet':
+        X_test = pd.read_parquet(test_data_path)
+    else:
+        X_test = pd.read_csv(test_data_path)
 
     target_name = config.dataset.target_name
     if target_name in X_test.columns:

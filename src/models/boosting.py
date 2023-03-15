@@ -63,15 +63,11 @@ class CatBoostTrainer(BaseModel):
             cat_features=[]
         )
         model = CatBoostClassifier(
-            random_state=self.config.model.seed,
-            cat_features=[],
-            task_type='GPU',
-            devices='1',
             **self.config.model.params
         )
         model.fit(
-            train_data,
-            eval_set=valid_data,
+            X_train, y_train,
+            eval_set=(X_valid, y_valid),
             verbose=self.config.model.verbose
         )
         return model
@@ -87,13 +83,13 @@ class XGBoostTrainer(BaseModel):
                y_valid: Optional[pd.Series] = None) -> xgb.Booster:
         dtrain = xgb.DMatrix(data=X_train, label=y_train)
         dvalid = xgb.DMatrix(data=X_valid, label=y_valid)
-        watchlist = [(dtrain, "train"), (dvalid, "valid")]
+        watchlist = [(dvalid, "eval")]
 
         model = xgb.train(
             dict(self.config.model.params),
             dtrain=dtrain,
-            evals=watchlist,
             num_boost_round=self.config.model.num_boost_round,
+            evals=watchlist,
             verbose_eval=self.config.model.verbose,
         )
 

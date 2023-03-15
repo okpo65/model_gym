@@ -3,3 +3,5 @@ dataset/*
 *.parquet
 *.csv
 .DS_Store
+.idea/
+.python-version

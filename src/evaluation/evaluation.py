@@ -9,6 +9,8 @@ from pytorch_tabnet.metrics import Metric
 import matplotlib.pyplot as plt
 import seaborn as sns
 from math import exp
+from sklearn.metrics import classification_report, roc_curve
+
 
 class AmexMetric(Metric):
     def __init__(self):
@@ -257,9 +259,8 @@ class CSSTask:
 
 def css_metric(y_pred: Union[pd.Series, np.ndarray],
                y_true: Union[pd.Series, np.ndarray]) -> float:
-    return CSSTask().eval_seg_ks(y_pred,
-                                 pd.DataFrame({'target':y_true}).reset_index(drop=True),
-                                 'target')
+    return Metric().get_ks(y_pred, y_true)
+
 
 def reconstruction_confidence(df_before,
                               df_after,
@@ -272,5 +273,63 @@ def reconstruction_confidence(df_before,
 
     return df
 
+
+class Metric:
+
+    def __init__(self):
+        pass
+
+    def _ks(self, default_prob, y_true):
+        assert default_prob.shape == y_true.shape
+        y_rev = 1 - y_true
+        nondefault_prob = 1 - default_prob
+
+        data = np.dstack((nondefault_prob, y_true, y_rev)).reshape(-1, 3)
+        data = data[np.argsort(nondefault_prob), :]
+        defaults_cum_rate = data[:, 1].cumsum() / y_true.sum()
+        nondefaults_cum_rate = data[:, 2].cumsum() / y_rev.sum()
+        max_ks_np = (defaults_cum_rate - nondefaults_cum_rate).max()
+        max_ks_np *= 100
+        return max_ks_np.round(2)
+
+    def _recall6N(self, y_score, y_true, threshold=6):
+        assert y_score.shape == y_score.shape
+        df = pd.DataFrame({'y_score': y_score, 'y_true': y_true})
+        size = df.shape[0]
+
+        df['rank'] = df['y_score'].rank(method='max')
+
+        recall = 0
+        ratio = 5
+
+        df['y_pred'] = (df['rank'] / size * 100 >= 100 - ratio).astype('int64')
+
+        TP = len(df.loc[(df['y_pred'] == 1) & df['y_true'] == 1])
+        TN = len(df.loc[(df['y_pred'] == 0) & df['y_true'] == 0])
+        FP = len(df.loc[(df['y_pred'] == 1) & df['y_true'] == 0])
+        FN = len(df.loc[(df['y_pred'] == 0) & df['y_true'] == 1])
+
+        recall = TP / (TP + FN)
+        recall = np.round(recall, 3)
+        threshold = min(df.loc[df['y_pred'] == 1, 'y_score'])
+
+        return recall
+
+    def _roc_curve(self, y_pred, y_true, pos_label=1):
+        assert y_true.shape == y_pred.shape
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=pos_label)
+        roc_auc = metrics.auc(fpr, tpr)
+
+        return round(roc_auc, 3)
+
+    def get_ks(self, y_pred, y_true):
+        ks = self._ks(y_pred, y_true)
+        return ks
+
+    def get_all_metrics(self, y_pred, y_true):
+        ks = self._ks(y_pred, y_true)
+        auc = self._roc_curve(y_pred, y_true)
+        recall = self._recall6N(y_pred, y_true)
+        return ks, auc, recall
 
 

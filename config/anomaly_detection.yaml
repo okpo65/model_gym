@@ -5,10 +5,10 @@
 #  - preprocessing: preprocessing_for_ml
 
 defaults:
-  - dataset: dataset3
-  - model: deepstack_dae
-  - features: features_with_dw_v2
-  - preprocessing: preprocessing
+  - dataset: dataset_dae
+  - model: bottleneck_dae
+  - features: features_jb_v2
+  - preprocessing: preprocessing_for_ml_v4
 
 output:
   before_path: ${dataset.root}/dataset/dae/df_nondefault_reconstructed_before.parquet

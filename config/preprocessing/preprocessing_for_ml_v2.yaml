@@ -1,7 +1,7 @@
 numerical:
   scaler:
     name: quantile_transformer # standard, minmax, quantil_transformer, label
-    n_quantiles: 3000
+    n_quantiles: 1000
     random_state: 42
     output_distribution: normal # uniform, normal
 
@@ -9,11 +9,11 @@ numerical:
 #    strategy: quantile # uniform, kmeans
 #    n_bins: 1000
 
-#  clipping:
-#    upper_bound: 0.01
-#    lower_bound: 0.01
+  clipping:
+    upper_bound: 0.01
+    lower_bound: 0.01
 
-  replace_null: 0
+  replace_null: -1
 
-categorical: one_hot
+#categorical: one_hot
 

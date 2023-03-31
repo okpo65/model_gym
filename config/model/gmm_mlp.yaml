@@ -1,7 +1,9 @@
 folds: 1
 params:
-  hidden_size_list: [512, 256, 128]
+  hidden_size_list: [2048, 1024, 512, 256, 128, 64]
   dropout_ratio: 0.2
+  num_components: 3
+
 
 optimizer:
   init_lr: 5e-5
@@ -25,5 +27,5 @@ iterations: 3000
 eval_verbose: 1
 
 path: res/models
-name: mlp
-result: mlp_test
+name: gmm_mlp
+result: gmm_mlp_test

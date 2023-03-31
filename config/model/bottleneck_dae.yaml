@@ -1,5 +1,8 @@
 params:
-  hidden_size: 1024
+  encoder_hidden_list: [ 512, 256, 128 ]
+  decoder_hidden_list: [ 128, 256, 512 ]
+#  encoder_hidden_list: [ 512, 256, 128 ]
+#  decoder_hidden_list: [ 128, 256, 512 ]
   bottleneck_size: 50
   emphasis: 0.8
   dropout_ratio: 0.2
@@ -20,15 +23,15 @@ noise_ratio:
   num: 0.2
   cat: 0.25
 
-batch_size: 1024
+batch_size: 512
 iterations: 3000
 
 eval_verbose: 1
 
 loss_weight:
   cat: 0.2
-  num: 0.9
+  num: 1.0
 
 path: res/models
 name: bottleneck_dae
-result: bottleneck_dae_1024_50_standard
+result: bottleneck_dae_qt_512_50_1to7all

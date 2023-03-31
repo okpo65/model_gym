@@ -1,0 +1,36 @@
+params:
+  encoder_hidden_list: [1024, 512, 256, 128]
+  decoder_hidden_list: [128, 256, 512, 1024]
+  bottleneck_size: 5
+  emphasis: 0.8
+  dropout_ratio: 0.3
+  num_components: 5
+
+optimizer:
+  init_lr: 3e-5
+  lr_gamma: 0.995
+
+scheduler:
+  gamma: 0.995
+
+earlystopper:
+  min_delta: 1e-7
+  patience: 30
+  verbose: 1
+
+noise_ratio:
+  num: 0.2
+  cat: 0.25
+
+batch_size: 1024
+iterations: 3000
+
+eval_verbose: 1
+
+loss_weight:
+  cat: 0.2
+  num: 1.0
+
+path: res/models
+name: gmm_dae
+result: gmm_dae_test_qt_512

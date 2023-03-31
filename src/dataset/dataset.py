@@ -107,17 +107,17 @@ class DataContainer():
     def get_dataframe(self):
         return self.df, self.df_y
 
-    def get_splited_dataframe(self, split_ratio=0.9) -> Tuple[pd.DataFrame,
-                                                              pd.DataFrame,
-                                                              pd.Series,
-                                                              pd.Series]:
+    def get_splited_data_series(self, split_ratio=0.9) -> Tuple[pd.Series,
+                                                                pd.Series,
+                                                                pd.Series,
+                                                                pd.Series]:
         train_x, valid_x = self._split_dataset(self.df, split_ratio)
         train_y, valid_y = self._split_dataset(self.df_y, split_ratio)
         return train_x, valid_x, train_y, valid_y
 
     def get_splited_dataloader(self, batch_size, num_workers, split_ratio=0.9) -> Tuple[DataLoader,
                                                                                         DataLoader]:
-        train_x, valid_x, train_y, valid_y = self.get_splited_dataframe(split_ratio)
+        train_x, valid_x, train_y, valid_y = self.get_splited_data_series(split_ratio)
 
         train_x = DataLoader(dataset=TrainDataset(train_x, train_y),
                              batch_size=batch_size,
@@ -146,6 +146,7 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame,
         X_train = pd.read_csv(config.dataset.train)
     # random shuffle
     X_train = X_train.sample(frac=1.0).reset_index(drop=True)
+    X_train = X_train.fillna(0)
     y_train = X_train[config.dataset.target_name]
 
     return X_train[feat_list], y_train
@@ -166,7 +167,7 @@ def load_test_data(config: DictConfig,
         X_test = pd.read_parquet(test_data_path)
     else:
         X_test = pd.read_csv(test_data_path)
-
+    X_test = X_test.fillna(0)
     target_name = config.dataset.target_name
     if target_name in X_test.columns:
         y_test = X_test[target_name]

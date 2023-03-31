@@ -296,28 +296,28 @@ total_features:
   - ZS0000204
   - ZS0000207
   # DW features
-  - interest_rate_max
-  - interest_rate_mean
-  - amount_mean
-  - opening_date_days_last
-  - amount_last
-  - amount_min
-  - opening_date_days_mean
-  - amount_max
-  - monthly_repayment_amount_min
-  - amount_std
-  - monthly_repayment_amount_last
-  - opening_date_days_min
-  - interest_rate_last
-  - interest_rate_std
-  - opening_date_days_first
-  - total_nice_46_count
+#  - interest_rate_max
+#  - interest_rate_mean
+#  - amount_mean
+#  - opening_date_days_last
+#  - amount_last
+#  - amount_min
+#  - opening_date_days_mean
+#  - amount_max
+#  - monthly_repayment_amount_min
+#  - amount_std
+#  - monthly_repayment_amount_last
+#  - opening_date_days_min
+#  - interest_rate_last
+#  - interest_rate_std
+#  - opening_date_days_first
+#  - total_nice_46_count
 
-cat_features:
-  - EW0002906
-  - EW0020901
-  - L00000505
-  - L00000605
-  - LE0000004
-  - ZS0000195
-  - ZS0000207
+#cat_features:
+#  - EW0002906
+#  - EW0020901
+#  - L00000505
+#  - L00000605
+#  - LE0000004
+#  - ZS0000195
+#  - ZS0000207

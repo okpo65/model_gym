@@ -8,7 +8,8 @@ from hydra.utils import get_original_cwd
 from omegaconf import DictConfig
 
 from src.dataset.dataset import load_train_data, load_test_data
-from src.models.infer import inference, load_model, inference_mlp, inference_dae, inference_feature_importance
+from src.models.infer import inference, load_model, inference_mlp, inference_dae, inference_feature_importance, \
+    inference_dae_gmm
 from src.evaluation.evaluation import css_metric
 from src.dataset.preprocessing import Preprocessor
 from src.utils.utils import DictX
@@ -61,7 +62,7 @@ def _main(cfg: DictConfig):
         model_path = Path(get_original_cwd()) / cfg.representation.path / cfg.representation.result
         # model load
         dae_results = load_model(model_path)
-        test_cont = inference_dae(dae_results, test_cont, device)
+        test_cont = inference_dae_gmm(dae_results, test_cont, device)
 
     # infer test dataset
     model_name = cfg.model.name
@@ -78,6 +79,8 @@ def _main(cfg: DictConfig):
         Path(get_original_cwd()) / cfg.output.path / cfg.output.name
     )
     pd.DataFrame(preds).to_csv(model_path)
+
+    print(preds, y_test)
 
     print(f"KS: {css_metric(preds, y_test)}")
 

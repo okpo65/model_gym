@@ -1,6 +1,6 @@
 numerical:
   scaler:
-    name: standard # standard, minmax, quantil_transformer, label
+    name: gauss_rank # standard, minmax, quantil_transformer, gauss_rank
     n_quantiles: 3000
     random_state: 42
     output_distribution: normal # uniform, normal

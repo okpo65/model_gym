@@ -14,15 +14,15 @@
 #  result: deepstack_dae_1500_dw
 
 defaults:
-  - dataset: dataset_dae
-  - model: mlp
-  - features: features_jb_v2
-  - preprocessing: preprocessing_for_ml_v4
+  - dataset: dataset
+  - model: tabnet
+  - features: features_jb
+  - preprocessing: preprocessing_for_ml_v2
 
-representation:
-  path: res/models
-  result: bottleneck_dae_1024_50_standard
+#representation:
+#  path: res/models
+#  result: bottleneck_dae_qt_512_50_1to7all
 
 output:
   path: res/output
-  name: ${model.result}_jb_test.csv
+  name: ${model.result}_test.csv

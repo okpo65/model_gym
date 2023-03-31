@@ -52,21 +52,19 @@ class CatBoostTrainer(BaseModel):
                X_valid: Optional[pd.DataFrame] = None,
                y_valid: Optional[pd.Series] = None) -> CatBoostClassifier:
 
-        train_data = Pool(
-            data=X_train,
-            label=y_train,
-            cat_features=[]
-        )
-        valid_data = Pool(
-            data=X_valid,
-            label=y_valid,
-            cat_features=[]
-        )
         model = CatBoostClassifier(
-            **self.config.model.params
+            # **self.config.model.params
+            iterations=self.config.model.params.iterations,
+            eval_metric=self.config.model.params.eval_metric,
+            loss_function=self.config.model.params.loss_function,
+            task_type=self.config.model.params.task_type,
+            devices=self.config.model.params.devices,
+            early_stopping_rounds=self.config.model.params.early_stopping_rounds
         )
+
         model.fit(
-            X_train, y_train,
+            X=X_train,
+            y=y_train,
             eval_set=(X_valid, y_valid),
             verbose=self.config.model.verbose
         )

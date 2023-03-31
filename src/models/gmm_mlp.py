@@ -1,24 +1,54 @@
+import copy
+from typing import NoReturn
+
 import torch
 import numpy as np
-import pandas as pd
-from typing import NoReturn
-from tqdm import tqdm
-import copy
-from torch.utils.data import DataLoader
-from .utils.utils import EarlyStopping, AverageMeter
-from .base_model import BaseDLModel
 import wandb
-# from src.models.loss.FocalLoss import FocalLos
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+import pandas as pd
+
+from src.models.base_model import BaseDLModel
+from src.utils.utils import EarlyStopping, AverageMeter
 
 
-class DeepStackMLP(torch.nn.Module):
+def gaussian_mixture_binary_loss(y_preds, y_true, means, variances, weights):
+    # compute the binary cross-entropy loss
+    mse_loss = torch.nn.functional.mse_loss(y_preds, y_true)
+
+    # compute the Gaussian mixture loss
+    num_components = means.shape[1]
+    num_samples = y_preds.shape[0]
+
+    # repeat the logits and y_true tensors for each component
+    y_preds = y_preds.repeat(1, num_components).view(num_samples*num_components, -1)
+    y_true = y_true.repeat(1, num_components).view(num_samples*num_components, -1)
+
+    # repeat the weights tensor for each sample
+    weights = weights.repeat(num_samples, 1)
+
+    # compute the log-likelihood of each component
+    normal_dist = torch.distributions.normal.Normal(loc=means, scale=torch.sqrt(variances))
+    log_likelihood = normal_dist.log_prob(y_preds.unsqueeze(-1)).sum(dim=-1)
+
+    # compute the log-likelihood of the mixture
+    log_prob = torch.logsumexp(torch.log(weights) + log_likelihood, dim=1)
+    gm_loss = -log_prob.mean()
+
+    # compute the total loss
+    loss = mse_loss + gm_loss
+    return loss
+
+
+
+class GaussianMLP(torch.nn.Module):
+
     def __init__(self,
                  len_cat,
                  len_num,
                  hidden_size_list,
                  dropout_ratio,
-                 lower_bound=0,
-                 upper_bound=10.5,
+                 num_components,
                  device=torch.device('cpu')):
         super().__init__()
 
@@ -26,6 +56,7 @@ class DeepStackMLP(torch.nn.Module):
         self.device = device
         self.hidden_size_list = hidden_size_list
         self.dropout_ratio = dropout_ratio
+        self.num_components = num_components
 
         self.calibrate_layer = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.len_total, out_features=self.hidden_size_list[0]),
@@ -46,22 +77,19 @@ class DeepStackMLP(torch.nn.Module):
 
         self.last_linear = torch.nn.Linear(self.hidden_size_list[-1], 1).to(device)
 
-        self.lower_bound = lower_bound
-        self.upper_bound = upper_bound
+        self.means = torch.nn.Parameter(torch.randn(1, self.num_components))
+        self.variances = torch.nn.Parameter(torch.randn(1, self.num_components))
+        self.weights = torch.nn.Parameter(torch.ones(1, self.num_components) / self.num_components)
 
-    def net(self, x):
+    def forward(self, x):
         x = self.calibrate_layer(x)
         for hidden_layer in self.hidden_layer_list:
             x = hidden_layer(x)
-        return self.last_linear(x)
+        x = self.last_linear(x)
+        return x, self.means, self.variances, self.weights
 
-    def forward(self, x):
-        return torch.sigmoid(self.net(x) * (self.upper_bound - self.lower_bound) + self.lower_bound)
-
-    def loss(self, x, y):
-        mlp_loss = torch.nn.functional.binary_cross_entropy(x, y)
-        # mlp_loss = torch.nn.functional.mse_loss(x, y)
-        # mlp_loss = gaussian_mixture_binary_loss(x, y, num_components=3, binary_weight=1.0, gaussian_weight=0.6)
+    def loss(self, x, y, means, variances, weights):
+        mlp_loss = gaussian_mixture_binary_loss(x, y, means, variances, weights)
         return mlp_loss
 
     def predict(self, test_dl: DataLoader) -> np.ndarray:
@@ -77,66 +105,7 @@ class DeepStackMLP(torch.nn.Module):
         predictions = np.concatenate(predictions).reshape(-1)
         return predictions
 
-    # MC Dropout
-    def predict_uncertainty(self, test_dl: DataLoader, n_process):
-        """
-        :param test_dl: Test dataloader
-        :param n_process: number of times how many mc dropout process
-        :return:
-        """
-        self.eval()
-        self.train()
-        total_predictions = []
-        with torch.no_grad():
-            for _ in tqdm(range(n_process)):
-                predictions = []
-                for i, x in enumerate(test_dl):
-                    if isinstance(x, list):
-                        x = x[0]
-                    x = x.to(self.device)
-                    prediction = self.forward(x)
-                    predictions.append(prediction.detach().cpu().numpy())
-                predictions = np.concatenate(predictions).reshape(-1)
-                if total_predictions == []:
-                    total_predictions = predictions
-                else:
-                    total_predictions = np.vstack([total_predictions, predictions])
-            mean = np.mean(total_predictions, axis=0)
-            std = np.std(total_predictions, axis=0)
-
-        return mean, std
-
-        # MC Dropout
-    def predict_uncertainty_2(self, X_test: pd.DataFrame, n_process):
-        """
-        :param test_dl: Test dataloader
-        :param n_process: number of times how many mc dropout process
-        :return:
-        """
-        self.eval()
-        self.train()
-        total_predictions = []
-        with torch.no_grad():
-            for _ in tqdm(range(n_process)):
-                predictions = []
-                input_value = torch.tensor(X_test.to_numpy(), dtype=torch.float32).to(self.device)
-                input_value = input_value.to(self.device)
-                prediction = self.forward(input_value)
-                predictions.append(prediction.detach().cpu().numpy())
-
-                predictions = np.concatenate(predictions).reshape(-1)
-
-                if total_predictions == []:
-                    total_predictions = predictions
-                else:
-                    total_predictions = np.vstack([total_predictions, predictions])
-            mean = np.mean(total_predictions, axis=0)
-            std = np.std(total_predictions, axis=0)
-
-        return mean, std
-
-
-class MLP(BaseDLModel):
+class GMMMLP(BaseDLModel):
     def __init__(self, **kwargs) -> NoReturn:
         super().__init__(**kwargs)
 
@@ -145,14 +114,15 @@ class MLP(BaseDLModel):
                valid_dl: DataLoader,
                len_cat: int,
                len_num: int,
-               device: torch.device) -> DeepStackMLP:
+               device: torch.device) -> GaussianMLP:
 
-        model = DeepStackMLP(
+        model = GaussianMLP(
             len_cat=len_cat,
             len_num=len_num,
             dropout_ratio=self.config.model.params.dropout_ratio,
             hidden_size_list=self.config.model.params.hidden_size_list,
-            device=device
+            num_components=self.config.model.params.num_components,
+            device=device,
         ).to(device)
 
         optimizer = torch.optim.Adam(
@@ -182,7 +152,8 @@ class MLP(BaseDLModel):
             for i, (x, target) in enumerate(train_dl):
                 x, target = x.to(device), target.to(device)
                 optimizer.zero_grad()
-                loss = model.loss(model.forward(x), target.unsqueeze(1))
+                prediction, means, variances, weights = model.forward(x)
+                loss = model.loss(prediction, target.unsqueeze(1), means, variances, weights)
                 loss.backward()
                 optimizer.step()
                 meter.update(loss.detach().cpu().numpy())
@@ -196,8 +167,10 @@ class MLP(BaseDLModel):
             with torch.no_grad():
                 for i, (x, target) in enumerate(valid_dl):
                     x, target = x.to(device), target.to(device)
-                    prediction = model.forward(x)
-                    loss = model.loss(prediction, target.unsqueeze(1))
+                    prediction, means, variances, weights = model.forward(x)
+                    loss = model.loss(prediction, target.unsqueeze(1), means, variances, weights)
+
+                    prediction = prediction[:, -1]
                     predictions.append(prediction.detach().cpu().numpy())
                     meter.update(loss.detach().cpu().numpy())
             predictions = np.concatenate(predictions)

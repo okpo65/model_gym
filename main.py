@@ -7,6 +7,8 @@ from src.models.boosting import LGBMTrainer, CatBoostTrainer, XGBoostTrainer
 from src.models.tabnet import TabNetTrainer
 from src.models.autoencoder import DAE
 from src.models.mlp import MLP
+from src.models.gmm_mlp import GMMMLP
+from src.models.gmm_dae import GMMDAE
 from src.evaluation.evaluation import css_metric
 from src.utils.utils import WANDB_KEY
 from src.dataset.preprocessing import Preprocessor
@@ -25,7 +27,9 @@ __all_model__ = DictX(
     deepstack_dae='deepstack_dae',
     bottleneck_dae='bottleneck_dae',
     transformer_dae='transformer_dae',
-    tabnet='tabnet'
+    tabnet='tabnet',
+    gmm_mlp='gmm_mlp',
+    gmm_dae='gmm_dae'
 )
 representation_key = 'representation'
 
@@ -89,8 +93,12 @@ def get_model(model_name, cfg):
         model = CatBoostTrainer(config=cfg, metric=css_metric)
     elif model_name == __all_model__.mlp:
         model = MLP(config=cfg, metric=css_metric)
+    elif model_name == __all_model__.gmm_mlp:
+        model = GMMMLP(config=cfg, metric=css_metric)
     elif model_name == __all_model__.deepstack_dae or model_name == __all_model__.bottleneck_dae or model_name == __all_model__.transformer_dae:
         model = DAE(config=cfg)
+    elif model_name == __all_model__.gmm_dae:
+        model = GMMDAE(config=cfg)
     elif model_name == __all_model__.tabnet:
         model = TabNetTrainer(config=cfg, metric=css_metric)
     return model

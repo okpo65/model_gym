@@ -35,7 +35,8 @@ def load_model(model_path: str) -> ModelResult:
     # model_path = Path(get_original_cwd()) / config.model.path / model_name
     #with torch.loading_context(map_location='cpu'):
     with open(model_path, "rb") as output:
-        model_result = CPU_Unpickler(output).load()# pickle.load(output)
+        # model_result = CPU_Unpickler(output).load()# pickle.load(output)
+        model_result = pickle.load(output)
 
     return model_result
 
@@ -114,11 +115,11 @@ def inference_dae(result: ModelResult,
     :param train_cont: DataContainer to be DAE representation features
     :return: new DataContainer with representation features
     """
-    test_dl = train_cont.get_test_dataloader(batch_size=64,
-                                             num_workers=3)
+    test_dl = train_cont.get_test_dataloader(batch_size=512,
+                                             num_workers=64)
     model = list(result.models.values())[0]
+    model.eval()
     model = model.to(device)
-
     torch_test = []
     for i, x in enumerate(test_dl):
         x = x.to(device)
@@ -134,6 +135,57 @@ def inference_dae(result: ModelResult,
     return new_test_cont
 
 
+def inference_dae_gmm(result: ModelResult,
+                      train_cont: DataContainer,
+                      device: torch.device) -> DataContainer:
+    """
+    :param result: ModelResult Object
+    :param train_cont: DataContainer to be DAE representation features
+    :return: new DataContainer with representation features
+    """
+    test_dl = train_cont.get_test_dataloader(batch_size=512,
+                                             num_workers=64)
+    model = list(result.models.values())[0]
+    model = model.to(device)
+    model.eval()
+    torch_test = []
+    for i, x in enumerate(test_dl):
+        x = x.to(device)
+        with torch.no_grad():
+            enc, dec, z, gamma = model.forward_gamma(x)
+        torch_test.append(z)
+    torch_test = torch.cat(torch_test, dim=0)
+
+    new_test_cont = DataContainer(df=pd.DataFrame(torch_test.detach().cpu().numpy()),
+                                  df_y=train_cont.df_y,
+                                  len_cat=0,
+                                  len_num=torch_test.shape[1])
+    return new_test_cont
+
+def inference_dae_gmm_gamma(result: ModelResult,
+                      train_cont: DataContainer,
+                      device: torch.device) -> pd.DataFrame:
+    """
+    :param result: ModelResult Object
+    :param train_cont: DataContainer to be DAE representation features
+    :return: new DataContainer with representation features
+    """
+    test_dl = train_cont.get_test_dataloader(batch_size=512,
+                                             num_workers=64)
+    model = list(result.models.values())[0]
+    model = model.to(device)
+    model.eval()
+    torch_test = []
+    for i, x in enumerate(test_dl):
+        x = x.to(device)
+        with torch.no_grad():
+            enc, dec, z, gamma = model.forward_gamma(x)
+        torch_test.append(gamma)
+    torch_test = torch.cat(torch_test, dim=0)
+    df_gamma = pd.DataFrame(torch_test.detach().cpu().numpy())
+    return df_gamma
+
+
 def inference_dae_reconstruction(result: ModelResult,
                                  train_cont: DataContainer,
                                  device: torch.device) -> DataContainer:
@@ -145,7 +197,8 @@ def inference_dae_reconstruction(result: ModelResult,
     test_dl = train_cont.get_test_dataloader(batch_size=512,
                                              num_workers=64)
     model = list(result.models.values())[0]
-
+    model = model.to(device)
+    model.eval()
     torch_test = []
     for i, x in enumerate(test_dl):
         x = x.to(device)

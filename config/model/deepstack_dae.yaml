@@ -1,4 +1,6 @@
 params:
+  encoder_hidden_list: [ 1500 ]
+  decoder_hidden_list: [ 1500 ]
   hidden_size: 1500
   emphasis: 0.8
 

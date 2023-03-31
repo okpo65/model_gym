@@ -29,14 +29,10 @@ def _main(cfg: DictConfig):
     Analyze confidence level after reconstructing the data with a model trained with DAE
     """
 
-    # model load
-    path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
-    results = load_model(cfg, path)
 
     # data load
     X_train, y_train = load_train_data(cfg)
     X_test, y_test = load_test_data(cfg)
-    print("results!", results)
 
     # preprocessing
     cat_features = [*cfg.features.cat_features] if 'cat_features' in cfg.features.keys() else []
@@ -54,7 +50,7 @@ def _main(cfg: DictConfig):
 
     # model load
     model_path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
-    dae_results = load_model(cfg, model_path)
+    dae_results = load_model(model_path)
     df_before, _ = test_cont.get_dataframe()
     df_before.columns = [f"{c}_cat" for c in df_before.columns.tolist()[:test_cont.len_cat]] + [f"{c}" for c in num_features]
     df_before.to_parquet(cfg.output.before_path)

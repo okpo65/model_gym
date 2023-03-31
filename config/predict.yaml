@@ -6,18 +6,18 @@
 
 
 defaults:
-  - dataset: dataset_dae
-  - model: mlp
-  - features: features_jb_v2
-  - preprocessing: preprocessing_for_ml_v3
+  - dataset: dataset
+  - model: catboost
+  - features: features_jb
+  - preprocessing: preprocessing_for_ml
 
-representation:
-  path: res/models
-  result: deepstack_dae_4500_standard_jb_no_cat
+#representation:
+#  path: res/models
+#  result: gmm_dae_test_qt_2048
 
 output:
   path: res/output
-  name: ${model.result}_test.csv
+  name: ${model.result}_8_test.csv
 
 #representation:
 #  path: res/models

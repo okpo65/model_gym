@@ -10,7 +10,7 @@ numerical:
 #    n_bins: 3000
 
   clipping:
-    upper_bound: 0.03
+    upper_bound: 0.01
     lower_bound: 0.01
 
   replace_null: -1

@@ -9,6 +9,6 @@ target_name: css_target
 
 seed: 42
 
-num_workers: 32
+num_workers: 24
 
 device: 'cuda:3'

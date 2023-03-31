@@ -11,7 +11,7 @@ from .loss.RMSELoss import RMSELoss
 import wandb
 
 
-class DeepStackDAE(torch.nn.Module):
+class DeepVAE(torch.nn.Module):
     def __init__(self,
                  len_cat,
                  len_num,
@@ -69,6 +69,8 @@ class DeepStackDAE(torch.nn.Module):
         self.len_cat = len_cat
         self.len_num = len_num
         self.emphasis = emphasis
+        self.upper_bound = 10.5
+        self.lower_bound = 0
 
     def forward(self, x):
         x_list = []
@@ -216,10 +218,10 @@ class DeepBottleneck(torch.nn.Module):
         w_cats, w_nums = self.split(mask * self.emphasis + (1 - mask) * (1 - self.emphasis))
 
         # focal_loss = FocalLoss(size_average=False)
-        cat_loss = weights[0] * torch.mul(w_cats, torch.nn.functional.binary_cross_entropy_with_logits(x_cats, y_cats, reduction='none'))
+        cat_loss = weights[0] * torch.mul(w_cats, torch.nn.functional.binary_cross_entropy_with_logits(x_cats, y_cats,
+                                                                                                       reduction='none'))
         num_loss = weights[1] * torch.mul(w_nums, torch.nn.functional.mse_loss(x_nums, y_nums, reduction='none'))
-        # num_loss = weights[1] * torch.nn.functional.mse_loss(x_nums, y_nums, reduction='none')
-
+        # num_loss = weights[1] * torch.mul(w_nums, RMSELoss()(x_nums, y_nums))
         if self.len_cat == 0:
             reconstruction_loss = num_loss.mean()
         else:
@@ -421,7 +423,6 @@ class DAE(BaseDAEModel):
             metrics = {"train/train_loss": train_loss}
             # valid
             meter.reset()
-            model.eval()
             with torch.no_grad():
                 for i, x in enumerate(valid_dl):
                     x = x.to(device)

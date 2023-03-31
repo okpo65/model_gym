@@ -13,7 +13,7 @@ numerical:
     upper_bound: 0.01
     lower_bound: 0.01
 
-  replace_null: 0
+  replace_null: -1
 
-categorical: one_hot
+#categorical: one_hot
 

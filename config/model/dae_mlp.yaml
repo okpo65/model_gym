@@ -1,9 +1,10 @@
 folds: 1
 params:
-  hidden_size_list: [2048, 1024, 512, 256, 128, 64]
-  dropout_ratio: 0.2
-  num_components: 3
-
+  encoder_hidden_list: [512, 256, 128]
+  decoder_hidden_list: [128, 256, 512]
+  bottleneck_size: 50
+  emphasis: 0.8
+  dropout_ratio: 0.3
 
 optimizer:
   init_lr: 5e-5
@@ -21,11 +22,19 @@ earlystopper:
   patience: 10
   verbose: 1
 
+noise_ratio:
+  num: 0.2
+  cat: 0.25
+
 batch_size: 512
 iterations: 3000
 
 eval_verbose: 1
 
+loss_weight:
+  cat: 0.2
+  num: 1.0
+
 path: res/models
-name: gmm_mlp
-result: gmm_mlp_test
+name: dae_mlp
+result: dae_mlp_1to7

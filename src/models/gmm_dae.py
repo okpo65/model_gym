@@ -193,16 +193,17 @@ class GaussianDAE(torch.nn.Module):
             # D x D
             cov_k = cov[i] + torch.eye(D).to(self.device) * eps
             cov_inverse.append(torch.inverse(cov_k).unsqueeze(0))
-            det_cov.append(np.linalg.det(cov_k.data.cpu().numpy() * (2 * np.pi)))
-            # det_cov.append(np.linalg.det(cov_k.data.cpu().numpy() * (np.pi)))
-            # det_cov.append(np.linalg.det(cov_k.data.cpu().numpy()))
+
+            # cov_k_det_value = np.linalg.det(cov_k.data.cpu().numpy() * (2 * np.pi)) + eps
+            _, cov_k_det_value = np.linalg.slogdet(cov_k.data.cpu().numpy() * (2 * np.pi))
+            det_cov.append(cov_k_det_value)
             cov_diag = cov_diag + torch.sum(1 / cov_k.diag())
 
         # K x D x D
         cov_inverse = torch.cat(cov_inverse, dim=0)
         # K
         det_cov = (torch.from_numpy(np.float64(np.array(det_cov)))).to(self.device)
-        # print("det_cov", det_cov)
+        print('det_cov', det_cov)
         # N x K
         exp_term_tmp = -0.5 * torch.sum(
             torch.sum(z_minus_mu.unsqueeze(-1) * cov_inverse.unsqueeze(0), dim=-2) * z_minus_mu, dim=-1)
@@ -211,8 +212,7 @@ class GaussianDAE(torch.nn.Module):
 
         exp_term = torch.exp(exp_term_tmp - max_val)
 
-        sample_energy = -max_val.squeeze() - torch.log(
-            torch.sum(phi.unsqueeze(0) * exp_term / (torch.sqrt(det_cov)).unsqueeze(0), dim=1) + eps)
+        sample_energy = -max_val.squeeze() - torch.log(torch.sum(phi.unsqueeze(0) * exp_term / (torch.sqrt(det_cov)).unsqueeze(0), dim=1) + eps)
 
         sample_energy = torch.mean(sample_energy)
 
@@ -238,6 +238,7 @@ class GaussianDAE(torch.nn.Module):
             reconstruction_loss = cat_loss.mean() + num_loss.mean()
 
         sample_energy, cov_diag = self.compute_energy(z, gamma)
+        print(reconstruction_loss, sample_energy)
         total_loss = reconstruction_loss + sample_energy * 0.1# + cov_diag * 0.0005
         return total_loss, reconstruction_loss, sample_energy
 

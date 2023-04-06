@@ -12,7 +12,7 @@ from math import exp
 from sklearn.metrics import classification_report, roc_curve
 
 
-class AmexMetric(Metric):
+class AmexCSSMetric(Metric):
     def __init__(self):
         self._name = "amex-metric"
         self._maximize = True
@@ -259,7 +259,7 @@ class CSSTask:
 
 def css_metric(y_pred: Union[pd.Series, np.ndarray],
                y_true: Union[pd.Series, np.ndarray]) -> float:
-    return Metric().get_ks(y_pred, y_true)
+    return CSSMetric().get_ks(y_pred, y_true)
 
 
 def reconstruction_confidence(df_before,
@@ -274,7 +274,7 @@ def reconstruction_confidence(df_before,
     return df
 
 
-class Metric:
+class CSSMetric:
 
     def __init__(self):
         pass

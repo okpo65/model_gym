@@ -53,15 +53,15 @@ class DataContainer():
         self.len_cat = len_cat
         self.len_num = len_num
 
-    def _split_dataset(self, _df, cutoff_ratio) -> Tuple[np.ndarray, np.ndarray]:
+    def _split_dataframe(self, _df, cutoff_ratio) -> Tuple[pd.DataFrame, pd.DataFrame]:
         cutoff = int(len(_df) * cutoff_ratio)
-        train_data = _df.iloc[:cutoff].to_numpy()
-        valid_data = _df.iloc[cutoff:].to_numpy()
+        train_data = _df.iloc[:cutoff]
+        valid_data = _df.iloc[cutoff:].reset_index(drop=True)
 
         return train_data, valid_data
 
     def get_dae_dataloader(self, batch_size, num_workers) -> Tuple[DataLoader, DataLoader]:
-        train_x, valid_x = self._split_dataset(self.df, 0.9)
+        train_x, valid_x = self._split_dataframe(self.df, 0.9)
         train_x = DataLoader(dataset=DAEDataset(train_x),
                              batch_size=batch_size,
                              num_workers=num_workers,
@@ -107,13 +107,13 @@ class DataContainer():
     def get_dataframe(self):
         return self.df, self.df_y
 
-    def get_splited_data_series(self, split_ratio=0.9) -> Tuple[pd.Series,
-                                                                pd.Series,
+    def get_splited_data_series(self, split_ratio=0.9) -> Tuple[pd.DataFrame,
+                                                                pd.DataFrame,
                                                                 pd.Series,
                                                                 pd.Series]:
-        train_x, valid_x = self._split_dataset(self.df, split_ratio)
-        train_y, valid_y = self._split_dataset(self.df_y, split_ratio)
-        return train_x, valid_x, train_y, valid_y
+        train_x, valid_x = self._split_dataframe(self.df, split_ratio)
+        train_y, valid_y = self._split_dataframe(self.df_y, split_ratio)
+        return train_x, valid_x, train_y.to_numpy(), valid_y
 
     def get_splited_dataloader(self, batch_size, num_workers, split_ratio=0.9) -> Tuple[DataLoader,
                                                                                         DataLoader]:

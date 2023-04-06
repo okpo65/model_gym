@@ -257,8 +257,6 @@ class BaseModel(metaclass=ABCMeta):
 
         if folds == 1:
             X_train, X_valid, y_train, y_valid = train_cont.get_splited_data_series()
-            X_train = pd.DataFrame(X_train)
-            X_valid = pd.DataFrame(X_valid)
             wandb.init(project='model_gym',
                        group=f"{self.config.model.result}",
                        job_type=f'train_{0}',
@@ -271,7 +269,7 @@ class BaseModel(metaclass=ABCMeta):
             # validation
             pred = model.predict(X_valid) if isinstance(model, lgb.Booster) else model.predict(
                     xgb.DMatrix(X_valid)) if isinstance(model, xgb.Booster) else model.predict_proba(
-                    X_valid)[:, 1]
+                    X_valid.to_numpy())[:, 1]
 
             # score
             scores = self.metric(pred, y_valid)

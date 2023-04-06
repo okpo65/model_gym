@@ -1,7 +1,7 @@
 params:
-  encoder_hidden_list: [1024, 512, 256, 128]
-  decoder_hidden_list: [128, 256, 512, 1024]
-  bottleneck_size: 5
+  encoder_hidden_list: [512, 256, 128]
+  decoder_hidden_list: [128, 256, 512]
+  bottleneck_size: 50
   emphasis: 0.8
   dropout_ratio: 0.3
   num_components: 5

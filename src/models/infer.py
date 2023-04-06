@@ -67,6 +67,55 @@ def inference(result: ModelResult,
 
     return preds_proba
 
+def inference_tabnet(result: ModelResult,
+                     X_test: pd.DataFrame) -> np.ndarray:
+    """
+    :param result: ModelResult Object
+    :param X_test: dataframe
+    :return: predict probabilities for each class
+
+    inference for boosting model
+    """
+
+    folds = len(result.models)
+    preds_proba = np.zeros((X_test.shape[0], ))
+
+    for model in tqdm(result.models.values(), total=folds):
+        preds_proba += (
+            model.predict_proba(X_test.to_numpy())[:, 1] / folds
+        )
+    assert len(preds_proba) == len(X_test)
+
+    return preds_proba
+
+def inference_dae_mlp(result: ModelResult,
+                      test_dl: DataLoader,
+                      device: torch.device) -> np.ndarray:
+    """
+    :param result: ModelResult Object
+    :param X_test: dataframe
+    :return: predict probabilities for each class
+
+    inference for boosting model
+    """
+    folds = len(result.models)
+    preds_proba = np.zeros((test_dl.dataset.x.shape[0],))
+    for model in tqdm(result.models.values(), total=folds):
+        _model = model.to(device)
+        _model.eval()
+        predictions = []
+        with torch.no_grad():
+            prediction = _model.predict(test_dl)
+        predictions.append(prediction)
+        print("predictions",prediction)
+        print("sdfsdf", np.concatenate(predictions))
+        predictions = np.concatenate(predictions).reshape(-1)
+        preds_proba += (
+                predictions / folds
+        )
+    assert len(preds_proba) == len(test_dl.dataset.x)
+    return preds_proba
+
 def inference_feature_importance(result: ModelResult, cat_features, num_features) -> pd.DataFrame:
     folds = len(result.models)
     df_fi = pd.DataFrame()

@@ -6,13 +6,13 @@ params:
   eval_metric: AUC
   loss_function: Logloss
   task_type: GPU
-  devices: '1'
+  devices: '0:4'
 #  l2_leaf_reg: 70
   early_stopping_rounds: 1000
 
 name: catboost
 
 path: res/models
-result: catboost_1to7_fi
+result: catboost_1to2
 seed: 42
 verbose: 500

@@ -26,4 +26,4 @@ eval_verbose: 1
 
 path: res/models
 name: mlp
-result: mlp_test
+result: mlp_1to7_test

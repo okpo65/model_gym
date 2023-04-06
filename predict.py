@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 
 from src.dataset.dataset import load_train_data, load_test_data
 from src.models.infer import inference, load_model, inference_mlp, inference_dae, inference_feature_importance, \
-    inference_dae_gmm
+    inference_dae_gmm, inference_dae_mlp, inference_tabnet
 from src.evaluation.evaluation import css_metric
 from src.dataset.preprocessing import Preprocessor
 from src.utils.utils import DictX
@@ -22,7 +22,9 @@ __all_model__ = DictX(
     deepstack_dae='deepstack_dae',
     bottleneck_dae='bottleneck_dae',
     transformer_dae='transformer_dae',
-    tabnet='tabnet'
+    tabnet='tabnet',
+    dae_mlp='dae_mlp'
+
 )
 representation_key = 'representation'
 
@@ -54,7 +56,6 @@ def _main(cfg: DictConfig):
                                 cat_features=cat_features)
 
     train_cont, test_cont = preprocessor.perform()
-    # test_cont.get_dataframe()[0].to_parquet('../CSS/dataset/test/df_dae_03test_2_proxy_processed.parquet')
 
     device = torch.device(cfg.dataset.device)
     # using representation learning features
@@ -70,6 +71,14 @@ def _main(cfg: DictConfig):
         test_dl = test_cont.get_test_dataloader(batch_size=cfg.model.batch_size,
                                                 num_workers=cfg.dataset.num_workers)
         preds = inference_mlp(results, test_dl, device)
+    elif model_name == __all_model__.dae_mlp:
+        test_dl = test_cont.get_test_dataloader(batch_size=cfg.model.batch_size,
+                                                num_workers=cfg.dataset.num_workers)
+        preds = inference_dae_mlp(results, test_dl, device)
+    elif model_name == __all_model__.tabnet:
+        X_test, _ = test_cont.get_dataframe()
+        preds = inference_tabnet(results, X_test)
+
     else:
         X_test, _ = test_cont.get_dataframe()
         preds = inference(results, X_test)

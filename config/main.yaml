@@ -15,9 +15,9 @@
 
 defaults:
   - dataset: dataset
-  - model: tabnet
+  - model: catboost
   - features: features_jb
-  - preprocessing: preprocessing_for_ml_v2
+  - preprocessing: preprocessing_for_ml
 
 #representation:
 #  path: res/models

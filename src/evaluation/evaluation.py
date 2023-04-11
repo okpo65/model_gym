@@ -5,7 +5,7 @@ import pandas as pd
 import xgboost as xgb
 from sklearn import metrics
 from sklearn.metrics import roc_curve as r_curve
-from pytorch_tabnet.metrics import Metric
+from ..models.tabnet_model.metrics import Metric
 import matplotlib.pyplot as plt
 import seaborn as sns
 from math import exp

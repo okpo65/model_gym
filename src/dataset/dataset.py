@@ -62,13 +62,13 @@ class DataContainer():
 
     def get_dae_dataloader(self, batch_size, num_workers) -> Tuple[DataLoader, DataLoader]:
         train_x, valid_x = self._split_dataframe(self.df, 0.9)
-        train_x = DataLoader(dataset=DAEDataset(train_x),
+        train_x = DataLoader(dataset=DAEDataset(train_x.to_numpy()),
                              batch_size=batch_size,
                              num_workers=num_workers,
                              shuffle=True,
                              pin_memory=True,
                              drop_last=True)
-        valid_x = DataLoader(dataset=DAEDataset(valid_x),
+        valid_x = DataLoader(dataset=DAEDataset(valid_x.to_numpy()),
                              batch_size=batch_size,
                              num_workers=num_workers,
                              shuffle=False,
@@ -77,7 +77,7 @@ class DataContainer():
         return train_x, valid_x
 
     def get_train_dataloader(self, batch_size, num_workers) -> DataLoader:
-        x_dl = DataLoader(dataset=TrainDataset(self.df, self.df_y),
+        x_dl = DataLoader(dataset=TrainDataset(self.df.to_numpy(), self.df_y),
                           batch_size=batch_size,
                           num_workers=num_workers,
                           shuffle=True,
@@ -86,7 +86,7 @@ class DataContainer():
         return x_dl
 
     def get_valid_dataloader(self, batch_size, num_workers) -> DataLoader:
-        x_dl = DataLoader(dataset=TrainDataset(self.df, self.df_y),
+        x_dl = DataLoader(dataset=TrainDataset(self.df.to_numpy(), self.df_y),
                           batch_size=batch_size,
                           num_workers=num_workers,
                           shuffle=False,
@@ -119,13 +119,13 @@ class DataContainer():
                                                                                         DataLoader]:
         train_x, valid_x, train_y, valid_y = self.get_splited_data_series(split_ratio)
 
-        train_x = DataLoader(dataset=TrainDataset(train_x, train_y),
+        train_x = DataLoader(dataset=TrainDataset(train_x.to_numpy(), train_y),
                              batch_size=batch_size,
                              num_workers=num_workers,
                              shuffle=True,
                              pin_memory=True,
                              drop_last=True)
-        valid_x = DataLoader(dataset=TrainDataset(valid_x, valid_y),
+        valid_x = DataLoader(dataset=TrainDataset(valid_x.to_numpy(), valid_y),
                              batch_size=batch_size,
                              num_workers=num_workers,
                              shuffle=False,

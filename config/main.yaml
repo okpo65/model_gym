@@ -14,10 +14,10 @@
 #  result: deepstack_dae_1500_dw
 
 defaults:
-  - dataset: dataset
-  - model: catboost
-  - features: features_jb
-  - preprocessing: preprocessing_for_ml
+  - dataset: dataset_latent
+  - model: mlp
+  - features: features_latent
+  - preprocessing: preprocessing_for_ml_v2
 
 #representation:
 #  path: res/models

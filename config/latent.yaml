@@ -1,0 +1,11 @@
+
+defaults:
+  - dataset: dataset_latent
+  - model: tabnet
+  - features: features_jb
+  - preprocessing: preprocessing_for_ml_v2
+
+output:
+  path: res/latent
+  name: ${model.result}_test_latent.parquet
+

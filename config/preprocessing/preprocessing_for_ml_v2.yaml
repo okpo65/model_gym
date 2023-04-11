@@ -1,7 +1,7 @@
 numerical:
   scaler:
     name: quantile_transformer # standard, minmax, quantil_transformer, label
-    n_quantiles: 1000
+    n_quantiles: 3000
     random_state: 42
     output_distribution: normal # uniform, normal
 

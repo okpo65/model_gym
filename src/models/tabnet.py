@@ -3,8 +3,10 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_tabnet.metrics import Metric
-from pytorch_tabnet.tab_model import TabNetClassifier
+# from tabnet_model.metrics import Metric
+# from tabnet_model.tab_model import TabNetClassifier
+from ..models.tabnet_model.metrics import Metric
+from ..models.tabnet_model.tab_model import TabNetClassifier
 
 from .base_model import BaseModel
 
@@ -35,7 +37,12 @@ class TabNetTrainer(BaseModel):
                                  "gamma": self.config.model.params.scheduler_gamma},
             "scheduler_fn": torch.optim.lr_scheduler.StepLR,
             "mask_type": self.config.model.params.mask_type,  # "sparsemax"
-            "device_name": self.config.dataset.device
+            "device_name": self.config.dataset.device,
+            "n_d": self.config.model.params.n_d,
+            "n_a": self.config.model.params.n_a,
+            "n_steps": self.config.model.params.n_steps,
+            "gamma": self.config.model.params.gamma,
+            "lambda_sparse": self.config.model.params.lambda_sparse
         }
 
     def _train(self,

@@ -1,0 +1,16 @@
+root: /home/peoplefund/workspace/jihwan-css/CSS
+
+#train: /home/peoplefund/workspace/jihwan-css/ModelStorage/res/latent/tabnet_test_latent.parquet
+#train: ${dataset.root}/dataset/train/df_1_to_7_all_light.parquet
+train: ${dataset.root}/dataset/train/df_1_to_7_tabnet32.parquet
+#test: ${dataset.root}/dataset/train/df_1_to_7_all_light.parquet
+test: ${dataset.root}/dataset/test/df_8_tabnet32.parquet
+
+target_name: target
+
+seed: 42
+
+num_workers: 32
+
+device: 'cuda:1'
+

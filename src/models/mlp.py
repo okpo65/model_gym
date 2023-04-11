@@ -201,8 +201,9 @@ class MLP(BaseDLModel):
                     predictions.append(prediction.detach().cpu().numpy())
                     meter.update(loss.detach().cpu().numpy())
             predictions = np.concatenate(predictions)
+            predictions = np.squeeze(predictions, axis=1)
             valid_loss = meter.overall_avg
-            valid_metric_value = self.metric(predictions, valid_dl.dataset.y)
+            valid_metric_value = self.metric(predictions, valid_dl.dataset.y.values)
             val_metrics = {"val/val_loss": valid_loss,
                            "val/val_metric": valid_metric_value}
             wandb.log({**metrics, **val_metrics})

@@ -14,7 +14,8 @@ params:
 fit_params:
   max_epochs: 1000
   patience: 30
-  batch_size: 1024
+#  batch_size: 1024
+  batch_size: 5120 #4096
   virtual_batch_size: 256
   num_workers: 32
   drop_last: False
@@ -24,5 +25,5 @@ eval_metric: logloss # 'auc', 'accuracy', 'balanced_accuracy', 'logloss'
 name: tabnet
 
 path: res/models
-result: tabnet_qt1000_32_1to7_test
+result: tabnet_test #tabnet_qt3000_32_1to7_test
 verbose: 500

@@ -88,6 +88,31 @@ def inference_tabnet(result: ModelResult,
 
     return preds_proba
 
+def inference_tabnet_latent(result: ModelResult,
+                            X_test: pd.DataFrame,
+                            y_test: pd.Series) -> np.ndarray:
+    """
+    :param result: ModelResult Object
+    :param X_test: dataframe
+    :return: predict probabilities for each class
+
+    inference latent for boosting model
+    """
+
+    folds = len(result.models)
+    latent = np.zeros((X_test.shape[0], ))
+
+    for model in tqdm(result.models.values(), total=folds):
+        latent = model.predict_latent(X_test.to_numpy())
+
+    assert latent.shape[0] == len(X_test)
+    new_test_cont = DataContainer(df=pd.DataFrame(latent),
+                                  df_y=y_test,
+                                  len_cat=0,
+                                  len_num=latent.shape[1])
+    return new_test_cont
+
+
 def inference_dae_mlp(result: ModelResult,
                       test_dl: DataLoader,
                       device: torch.device) -> np.ndarray:

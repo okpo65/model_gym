@@ -11,13 +11,12 @@ from src.models.dae_mlp import DAEMLP
 from src.models.gmm_dae import GMMDAE
 from src.evaluation.evaluation import css_metric
 from src.utils.utils import WANDB_KEY
-from src.dataset.preprocessing import Preprocessor
+from src.dataset.preprocessing import Preprocessor, PreprocessorApplicator, get_preprocessor_path
 import hydra
 from src.utils.utils import DictX
 from omegaconf import DictConfig
 from src.models.infer import inference_dae, load_model
 import wandb
-
 
 __all_model__ = DictX(
     catboost='catboost',
@@ -33,6 +32,7 @@ __all_model__ = DictX(
 )
 representation_key = 'representation'
 
+
 @hydra.main(config_path='config/', config_name='main', version_base='1.2.0')
 def _main(cfg: DictConfig):
     """
@@ -40,8 +40,7 @@ def _main(cfg: DictConfig):
 
     Control the overall course of Learning
     """
-    # os.environ["WANDB_MODE"] = "online"
-    
+
     # wandb login
     wandb.login(key=WANDB_KEY)
 
@@ -52,12 +51,29 @@ def _main(cfg: DictConfig):
     cat_features = [*cfg.features.cat_features] if 'cat_features' in cfg.features.keys() else []
     num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
 
-    preprocessor = Preprocessor(cfg.preprocessing,
-                                X_train,
-                                y_train,
-                                num_features=num_features,
-                                cat_features=cat_features)
-    train_cont, _ = preprocessor.perform()
+    if 'preprocessor_applicator' in cfg.keys():
+        preprocessor_path = get_preprocessor_path(cfg)
+        if not os.path.exists(preprocessor_path):
+            os.makedirs(preprocessor_path)
+
+        preprocessor = PreprocessorApplicator(cfg.preprocessing,
+                                              X_train,
+                                              y_train,
+                                              num_features=num_features,
+                                              cat_features=cat_features,
+                                              preprocessor_path=preprocessor_path)
+        if not os.listdir(preprocessor_path) or cfg.preprocessor_applicator.refresh == True:
+            preprocessor.save()
+
+        train_cont = preprocessor.perform(X_train, y_train)
+    else:
+        preprocessor = Preprocessor(cfg.preprocessing,
+                                    X_train,
+                                    y_train,
+                                    num_features=num_features,
+                                    cat_features=cat_features)
+        train_cont, _ = preprocessor.perform()
+
     print('-------------\n Started Training \n-----------', train_cont.get_dataframe())
     device = torch.device(cfg.dataset.device)
     # using Representation Learning Features
@@ -77,6 +93,7 @@ def _main(cfg: DictConfig):
     # model save
     model.save_model()
     wandb.finish()
+
 
 def get_model(model_name, cfg):
     """
@@ -102,6 +119,7 @@ def get_model(model_name, cfg):
     elif model_name == __all_model__.tabnet:
         model = TabNetTrainer(config=cfg, metric=css_metric)
     return model
+
 
 if __name__ == "__main__":
     _main()

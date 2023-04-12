@@ -313,6 +313,8 @@ total_features:
 #  - opening_date_days_first
 #  - total_nice_46_count
 
+name:
+  features_jb
 #cat_features:
 #  - EW0002906
 #  - EW0020901

@@ -31,3 +31,6 @@ total_features:
   - '29'
   - '30'
   - '31'
+
+name:
+  features_latent

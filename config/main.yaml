@@ -14,10 +14,14 @@
 #  result: deepstack_dae_1500_dw
 
 defaults:
-  - dataset: dataset_latent
-  - model: mlp
-  - features: features_latent
+  - dataset: dataset
+  - model: tabnet
+  - features: features_jb
   - preprocessing: preprocessing_for_ml_v2
+
+preprocessor_applicator:
+  path: res/preprocessor
+  refresh: False
 
 #representation:
 #  path: res/models

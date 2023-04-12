@@ -19,6 +19,7 @@ def read_csv_file(file_path):
         res_list.append([row for row in reader][0])
     return res_list
 
+
 class AverageMeter(object):
     """
     Average value generator for a specific size

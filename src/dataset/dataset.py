@@ -145,7 +145,6 @@ def load_train_data(config: DictConfig) -> Tuple[pd.DataFrame,
     else:
         X_train = pd.read_csv(config.dataset.train)
     # random shuffle
-    X_train = X_train.sample(frac=1.0).reset_index(drop=True)
     X_train = X_train.fillna(0)
     y_train = X_train[config.dataset.target_name]
 

@@ -14,5 +14,5 @@ seed: 42
 
 num_workers: 32
 
-device: 'cuda:1'
+device: 'cuda:0'
 

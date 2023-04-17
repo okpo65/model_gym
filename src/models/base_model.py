@@ -75,6 +75,49 @@ class BaseDAEModel(metaclass=ABCMeta):
         )
         return self.result
 
+class BaseTabNetPretrainModel(metaclass=ABCMeta):
+    def __init__(self,
+                 config: DictConfig):
+        self.config = config
+        self.result = None
+
+    @abstractmethod
+    def _train(self,
+               X_train: pd.DataFrame,
+               X_valid: pd.DataFrame,
+               device: torch.device) -> NoReturn:
+        raise NotImplementedError
+
+    def save_model(self) -> NoReturn:
+
+        model_path = (
+            Path(get_original_cwd()) / self.config.model.path / self.config.model.result
+        )
+
+        with open(model_path, 'wb') as output:
+            pickle.dump(self.result, output, pickle.HIGHEST_PROTOCOL)
+
+    def train(self,
+              train_cont: DataContainer,
+              device: torch.device) -> ModelResult:
+
+        X_train, X_valid, _, _ = train_cont.get_splited_data_series()
+        wandb.init(project='model_gym',
+                   group=f"{self.config.model.result}",
+                   job_type=f'train_{0}',
+                   config=self.config.model,
+                   reinit=True)
+
+        model = self._train(X_train, X_valid, device)
+
+        # score
+        self.result = ModelResult(
+            oof_preds=np.array([]),
+            models={"fold_0": model},
+            scores={}
+        )
+        return self.result
+
 class BaseDLModel(metaclass=ABCMeta):
     def __init__(self,
                  config: DictConfig,

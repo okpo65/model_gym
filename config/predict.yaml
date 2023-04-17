@@ -6,14 +6,18 @@
 
 
 defaults:
-  - dataset: dataset_latent
-  - model: mlp
-  - features: features_latent
-  - preprocessing: preprocessing_for_ml_v2
+  - dataset: dataset
+  - model: catboost
+  - features: features_jb_av2
+  - preprocessing: preprocessing_for_ml
 
 #representation:
 #  path: res/models
 #  result: gmm_dae_test_qt_2048
+
+preprocessor_applicator:
+  path: res/preprocessor
+  refresh: False
 
 output:
   path: res/output

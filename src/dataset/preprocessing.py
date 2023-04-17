@@ -27,163 +27,11 @@ preprocessor_cat_strategy = DictX(
     embedding='embedding'
 )
 
-
 def get_preprocessor_path(cfg: DictConfig):
     train_file_name = cfg.dataset.train.split('/')[-1].split('.')[0]
     preprocessor_applicator_file_name = f"{train_file_name}_{cfg.features.name}_{cfg.preprocessing.name}"
     preprocessor_path = Path(get_original_cwd()) / cfg.preprocessor_applicator.path / preprocessor_applicator_file_name
     return preprocessor_path
-
-
-class Preprocessor(object):
-    """
-    Preprocessing for train or test data
-    Train dataset Preprocessing: based on its own dataset
-    Test dataset Preprocessing: based on train dataset
-    """
-
-    def __init__(self,
-                 cfg: DictConfig,
-                 X_train: pd.DataFrame,
-                 y_train: Optional[pd.Series] = None,
-                 X_test: Optional[pd.DataFrame] = None,
-                 num_features: List[str] = [],
-                 cat_features: List[str] = []):
-        self.cfg = cfg
-        self.X_train = X_train
-        self.y_train = y_train
-        self.X_test = X_test
-        self.cat_features = cat_features
-        self.num_features = num_features
-
-        self.X_train = self.X_train.fillna(0)
-        if self.X_test is not None:
-            self.X_test = self.X_test.fillna(0)
-
-    def perform(self) -> Tuple[DataContainer, Optional[DataContainer]]:
-        # numerical features preprocessing
-        numerical_keys = self.cfg.numerical.keys() if 'numerical' in self.cfg.keys() else {}
-        np_train_num, np_test_num = self._perform_num_feature(numerical_keys)
-
-        # categorical features preprocessing
-        categorical_key = self.cfg.categorical if 'categorical' in self.cfg.keys() else ''
-        np_train_cat, np_test_cat = self._perform_cat_feature(categorical_key)
-
-        np_train = np.hstack([np_train_cat, np_train_num])
-        np_test = np.hstack([np_test_cat, np_test_num])
-        len_train_cat = np_train_cat.shape[1]
-        len_train_num = np_train_num.shape[1]
-
-        train_columns = [f"cat_{idx}" for idx in range(0, len_train_cat)] + [col for col in self.num_features]
-        X_train_cont = DataContainer(df=pd.DataFrame(np_train, columns=train_columns),
-                                     df_y=self.y_train,
-                                     len_cat=len_train_cat,
-                                     len_num=len_train_num)
-        X_test_cont = None
-        if self.X_test is not None:
-            len_test_cat = np_test_cat.shape[1]
-            len_test_num = np_test_num.shape[1]
-            test_columns = [f"cat_{idx}" for idx in range(0, len_test_cat)] + [col for col in self.num_features]
-            X_test_cont = DataContainer(df=pd.DataFrame(np_test, columns=test_columns),
-                                        len_cat=len_test_cat,
-                                        len_num=len_test_num)
-        return X_train_cont, X_test_cont
-
-    # Overall preprocessing of numerical features
-    def _perform_num_feature(self, numerical_keys) -> Tuple[np.ndarray, Optional[np.ndarray]]:
-        if preprocessor_num_strategy.replace_null in numerical_keys:
-            self._replace_null_value(self.cfg.numerical.replace_null)
-        if preprocessor_num_strategy.clipping in numerical_keys:
-            self._fit_transform_clipping(self.cfg.numerical.clipping.upper_bound,
-                                         self.cfg.numerical.clipping.lower_bound)
-        if preprocessor_num_strategy.binning in numerical_keys:
-            kbins = self._get_bins(self.cfg.numerical.binning)
-            self._fit_transform_binning(kbins)
-        if preprocessor_num_strategy.scaler in numerical_keys:
-            scaler = self._get_scaler(self.cfg.numerical.scaler)
-            self._fit_transform_scaler(scaler)
-
-        np_train_num = self.X_train[self.num_features].to_numpy()
-        np_test_num = None
-        if self.X_test is not None:
-            np_test_num = self.X_test[self.num_features].to_numpy()
-
-        return np_train_num, np_test_num
-
-    # Overall preprocessing of categorical features
-    def _perform_cat_feature(self, categorical_key):
-        np_train_cat = self.X_train[self.cat_features].to_numpy()
-        if self.X_test is not None:
-            np_test_cat = self.X_test[self.cat_features].to_numpy()
-        else:
-            np_test_cat = None
-
-        if preprocessor_cat_strategy.one_hot == categorical_key:
-            encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
-            encoder.fit(self.X_train[self.cat_features])
-            np_train_cat = encoder.transform(self.X_train[self.cat_features])
-            if self.X_test is not None:
-                np_test_cat = encoder.transform(self.X_test[self.cat_features])
-
-        elif preprocessor_cat_strategy.embedding == categorical_key:
-            pass
-
-        return np_train_cat, np_test_cat
-
-    # scaling
-    def _fit_transform_scaler(self, scaler):
-        scaler.fit(self.X_train[self.num_features])
-        self.X_train[self.num_features] = scaler.transform(self.X_train[self.num_features])
-        if self.X_test is not None:
-            self.X_test[self.num_features] = scaler.transform(self.X_test[self.num_features])
-
-    # binning
-    def _fit_transform_binning(self, kbins):
-        kbins.fit(self.X_train[self.num_features].to_numpy())
-        self.X_train[self.num_features] = kbins.transform(self.X_train[self.num_features].to_numpy())
-        if self.X_test is not None:
-            self.X_test[self.num_features] = kbins.transform(self.X_test[self.num_features])
-
-    # clipping
-    def _fit_transform_clipping(self, upper_bound, lower_bound):
-        lower_bound_list = self.X_train[self.num_features].quantile(lower_bound, numeric_only=True)
-        upper_bound_list = self.X_train[self.num_features].quantile(1 - upper_bound, numeric_only=True)
-        for num_feat in self.num_features:
-            self.X_train[num_feat] = np.clip(self.X_train[num_feat].to_numpy(), lower_bound_list[num_feat],
-                                             upper_bound_list[num_feat])
-            if self.X_test is not None:
-                self.X_test[num_feat] = np.clip(self.X_test[num_feat].to_numpy(), lower_bound_list[num_feat],
-                                                upper_bound_list[num_feat])
-
-    # replace null value to other
-    def _replace_null_value(self, replace_value):
-        for col in self.X_train.columns:
-            if col in JARVIS_NULL_REPLACEMENTS.keys():
-                self.X_train[col] = self.X_train[col].replace(
-                    {c: replace_value for c in JARVIS_NULL_REPLACEMENTS[col].keys()})
-                if self.X_test is not None:
-                    self.X_test[col] = self.X_test[col].replace(
-                        {c: replace_value for c in JARVIS_NULL_REPLACEMENTS[col].keys()})
-
-    # get scaler
-    def _get_scaler(self, scaler_cfg):
-        scaler_list = {
-            'quantile_transformer': QuantileTransformer(n_quantiles=scaler_cfg.n_quantiles,
-                                                        output_distribution=scaler_cfg.output_distribution,
-                                                        random_state=scaler_cfg.random_state),
-            'standard': StandardScaler(),
-            'robust': RobustScaler(),
-            'minmax': MinMaxScaler(),
-            'gauss_rank': GaussRankScaler()
-        }
-        return scaler_list[scaler_cfg.name]
-
-    # get binning object
-    def _get_bins(self, binning_cfg):
-        kbins = KBinsDiscretizer(n_bins=binning_cfg.n_bins,
-                                 encode='ordinal',
-                                 strategy=binning_cfg.strategy)
-        return kbins
 
 
 class PreprocessorApplicator(object):
@@ -212,24 +60,17 @@ class PreprocessorApplicator(object):
             preprocess numerical, categorical features
         """
         # replace null
-        for col in self.num_features:
-            if col in JARVIS_NULL_REPLACEMENTS.keys():
-                X_pp[col] = X_pp[col].replace({c: self.cfg.numerical.replace_null for c in JARVIS_NULL_REPLACEMENTS[col].keys()})
-
+        self._replace_null_value(X_pp, self.cfg.numerical.replace_null)
+        
         # clipping
         clipping_path = f'{self.preprocessor_path}/clipping.csv'
         if os.path.exists(clipping_path):
-            df_clipping = pd.read_csv(clipping_path)
-            df_clipping['features'] = df_clipping['features'].astype(str)
-            for num_feat in self.num_features:
-                X_pp[num_feat] = np.clip(X_pp[num_feat].to_numpy(),
-                                         df_clipping.loc[df_clipping['features'] == num_feat]['lower_bound'].values[0],
-                                         df_clipping.loc[df_clipping['features'] == num_feat]['upper_bound'].values[0])
+            self._transform_clipping(X_pp, clipping_path)
+
         # scaling
         scaler_path = f'{self.preprocessor_path}/scaler.pkl'
         if os.path.exists(scaler_path):
-            scaler = pickle.load(open(scaler_path, 'rb'))
-            X_pp[self.num_features] = scaler.transform(X_pp[self.num_features])
+            self._transform_scaling(X_pp, scaler_path)
 
         X_cont = DataContainer(df=pd.DataFrame(X_pp[self.num_features], columns=self.num_features),
                                df_y=y_pp,
@@ -243,26 +84,38 @@ class PreprocessorApplicator(object):
         """
         # numerical features preprocessing
         numerical_keys = self.cfg.numerical.keys() if 'numerical' in self.cfg.keys() else {}
-        self._perform_num_feature(numerical_keys)
+        self._fit_num_feature(numerical_keys)
 
         # categorical features preprocessing
         categorical_key = self.cfg.categorical if 'categorical' in self.cfg.keys() else ''
-        self._perform_cat_feature(categorical_key)
+        self._fit_cat_feature(categorical_key)
+
+    def _transform_clipping(self, X_pp, clipping_path):
+        df_clipping = pd.read_csv(clipping_path)
+        df_clipping['features'] = df_clipping['features'].astype(str)
+        for num_feat in self.num_features:
+            X_pp[num_feat] = np.clip(X_pp[num_feat].to_numpy(),
+                                     df_clipping.loc[df_clipping['features'] == num_feat]['lower_bound'].values[0],
+                                     df_clipping.loc[df_clipping['features'] == num_feat]['upper_bound'].values[0])
+
+    def _transform_scaling(self, X_pp, scaler_path):
+        scaler = pickle.load(open(scaler_path, 'rb'))
+        X_pp[self.num_features] = scaler.transform(X_pp[self.num_features])
 
     # Overall preprocessing of numerical features
-    def _perform_num_feature(self, numerical_keys):
+    def _fit_num_feature(self, numerical_keys):
         if preprocessor_num_strategy.clipping in numerical_keys:
-            self._fit_transform_clipping(self.cfg.numerical.clipping.upper_bound,
-                                         self.cfg.numerical.clipping.lower_bound)
+            self._fit_clipping(self.cfg.numerical.clipping.upper_bound,
+                               self.cfg.numerical.clipping.lower_bound)
         if preprocessor_num_strategy.binning in numerical_keys:
             kbins = self._get_bins(self.cfg.numerical.binning)
-            self._fit_transform_binning(kbins)
+            self._fit_binning(kbins)
         if preprocessor_num_strategy.scaler in numerical_keys:
             scaler = self._get_scaler(self.cfg.numerical.scaler)
-            self._fit_transform_scaler(scaler)
+            self._fit_scaler(scaler)
 
     # Overall preprocessing of categorical features
-    def _perform_cat_feature(self, categorical_key):
+    def _fit_cat_feature(self, categorical_key):
         np_train_cat = self.X_train[self.cat_features].to_numpy()
 
         if preprocessor_cat_strategy.one_hot == categorical_key:
@@ -274,21 +127,21 @@ class PreprocessorApplicator(object):
             pass
 
     # scaling
-    def _fit_transform_scaler(self, scaler):
+    def _fit_scaler(self, scaler):
         scaler.fit(self.X_train[self.num_features])
         self.X_train[self.num_features] = scaler.transform(self.X_train[self.num_features])
         pickle.dump(scaler, open(f'{self.preprocessor_path}/scaler.pkl', 'wb'))
         print("save scaler")
 
     # binning
-    def _fit_transform_binning(self, kbins):
+    def _fit_binning(self, kbins):
         kbins.fit(self.X_train[self.num_features].to_numpy())
         self.X_train[self.num_features] = kbins.transform(self.X_train[self.num_features].to_numpy())
         pickle.dump(kbins, open(f'{self.preprocessor_path}/binning.pkl', 'wb'))
         print("save binning")
 
     # clipping
-    def _fit_transform_clipping(self, upper_bound, lower_bound):
+    def _fit_clipping(self, upper_bound, lower_bound):
         lower_bound_list = self.X_train[self.num_features].quantile(lower_bound, numeric_only=True)
         upper_bound_list = self.X_train[self.num_features].quantile(1 - upper_bound, numeric_only=True)
         df_clipping = pd.DataFrame()
@@ -299,11 +152,10 @@ class PreprocessorApplicator(object):
         print("save clipping")
 
     # replace null value to other
-    def _replace_null_value(self, replace_value):
-        for col in self.X_train.columns:
+    def _replace_null_value(self, X_pp, replace_value):
+        for col in X_pp.columns:
             if col in JARVIS_NULL_REPLACEMENTS.keys():
-                self.X_train[col] = self.X_train[col].replace(
-                    {c: replace_value for c in JARVIS_NULL_REPLACEMENTS[col].keys()})
+                X_pp[col] = X_pp[col].replace({c: replace_value for c in JARVIS_NULL_REPLACEMENTS[col].keys()})
 
     # get scaler
     def _get_scaler(self, scaler_cfg):

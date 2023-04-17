@@ -14,6 +14,7 @@ params:
 fit_params:
   max_epochs: 1000
   patience: 30
+#  batch_size: 1024
   batch_size: 1024 #4096
   virtual_batch_size: 256
   num_workers: 32
@@ -21,8 +22,8 @@ fit_params:
 
 eval_metric: logloss # 'auc', 'accuracy', 'balanced_accuracy', 'logloss'
 
-name: tabnet
+name: tabnet_pretrainer
 
 path: res/models
-result: tabnet_qt3000_32_1to2_av #tabnet_qt3000_32_1to7_test
+result: tabnet_pretrainer_qt3000_32_1to2 #tabnet_qt3000_32_1to7_test
 verbose: 500

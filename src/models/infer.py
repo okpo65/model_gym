@@ -32,13 +32,14 @@ def load_model(model_path: str) -> ModelResult:
     :return: ModelResult Object
     """
 
-    # model_path = Path(get_original_cwd()) / config.model.path / model_name
-    #with torch.loading_context(map_location='cpu'):
     with open(model_path, "rb") as output:
-        # model_result = CPU_Unpickler(output).load()# pickle.load(output)
         model_result = pickle.load(output)
 
     return model_result
+
+def load_pretrained_model(model_path: str):
+    result = load_model(model_path)
+    return result.models.values()[0]
 
 def inference(result: ModelResult,
               X_test: pd.DataFrame) -> np.ndarray:

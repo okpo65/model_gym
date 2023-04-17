@@ -12,22 +12,9 @@ from src.dataset.dataset import load_train_data, load_test_data
 from src.models.infer import inference, load_model, inference_mlp, inference_dae, inference_feature_importance, \
     inference_dae_gmm, inference_dae_mlp, inference_tabnet
 from src.evaluation.evaluation import css_metric
-from src.dataset.preprocessing import Preprocessor, PreprocessorApplicator, get_preprocessor_path
-from src.utils.utils import DictX
+from src.dataset.preprocessing import PreprocessorApplicator, get_preprocessor_path
+from src.utils.constants import representation_key, __all_model__
 
-__all_model__ = DictX(
-    catboost='catboost',
-    lgbm='lgbm',
-    xgboost='xgboost',
-    mlp='mlp',
-    deepstack_dae='deepstack_dae',
-    bottleneck_dae='bottleneck_dae',
-    transformer_dae='transformer_dae',
-    tabnet='tabnet',
-    dae_mlp='dae_mlp'
-
-)
-representation_key = 'representation'
 
 @hydra.main(config_path="config/", config_name='predict', version_base='1.2.0')
 def _main(cfg: DictConfig):
@@ -50,30 +37,20 @@ def _main(cfg: DictConfig):
     cat_features = [*cfg.features.cat_features] if 'cat_features' in cfg.features.keys() else []
     num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
 
-    if 'preprocessor_applicator' in cfg.keys():
-        preprocessor_path = get_preprocessor_path(cfg)
-        if not os.path.exists(preprocessor_path):
-            os.makedirs(preprocessor_path)
+    preprocessor_path = get_preprocessor_path(cfg)
+    if not os.path.exists(preprocessor_path):
+        os.makedirs(preprocessor_path)
 
-        preprocessor = PreprocessorApplicator(cfg.preprocessing,
-                                              X_train,
-                                              y_train,
-                                              num_features=num_features,
-                                              cat_features=cat_features,
-                                              preprocessor_path=preprocessor_path)
-        if not os.listdir(preprocessor_path) or cfg.preprocessor_applicator.refresh == True:
-            preprocessor.save()
+    preprocessor = PreprocessorApplicator(cfg.preprocessing,
+                                          X_train,
+                                          y_train,
+                                          num_features=num_features,
+                                          cat_features=cat_features,
+                                          preprocessor_path=preprocessor_path)
+    if not os.listdir(preprocessor_path) or cfg.preprocessor_applicator.refresh == True:
+        preprocessor.save()
 
-        test_cont = preprocessor.perform(X_test, y_test)
-    else:
-        preprocessor = Preprocessor(cfg.preprocessing,
-                                    X_train,
-                                    y_train,
-                                    X_test,
-                                    num_features=num_features,
-                                    cat_features=cat_features)
-        _, test_cont = preprocessor.perform()
-
+    test_cont = preprocessor.perform(X_test, y_test)
     device = torch.device(cfg.dataset.device)
     # using representation learning features
     if representation_key in cfg.keys():

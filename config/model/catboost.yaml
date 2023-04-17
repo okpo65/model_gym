@@ -13,6 +13,6 @@ params:
 name: catboost
 
 path: res/models
-result: catboost_tabnet_test
+result: catboost_1to2_av
 seed: 42
 verbose: 500

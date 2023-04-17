@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 import hydra
@@ -9,7 +10,7 @@ from omegaconf import DictConfig
 from src.dataset.dataset import load_train_data, load_test_data
 from src.models.infer import load_model, inference_dae_reconstruction, inference_dae, inference_dae_gmm_gamma
 from src.evaluation.evaluation import reconstruction_confidence
-from src.dataset.preprocessing import Preprocessor
+from src.dataset.preprocessing import get_preprocessor_path, PreprocessorApplicator
 from src.utils.utils import DictX
 
 __all_model__ = DictX(
@@ -42,14 +43,21 @@ def _main(cfg: DictConfig):
     # preprocessing
     cat_features = [*cfg.features.cat_features] if 'cat_features' in cfg.features.keys() else []
     num_features = sorted(list(set(X_train.columns.tolist()) - set(cat_features)))
-    preprocessor = Preprocessor(cfg.preprocessing,
-                                X_train,
-                                y_train,
-                                X_test,
-                                num_features=num_features,
-                                cat_features=cat_features)
 
-    train_cont, test_cont = preprocessor.perform()
+    preprocessor_path = get_preprocessor_path(cfg)
+    if not os.path.exists(preprocessor_path):
+        os.makedirs(preprocessor_path)
+
+    preprocessor = PreprocessorApplicator(cfg.preprocessing,
+                                          X_train,
+                                          y_train,
+                                          num_features=num_features,
+                                          cat_features=cat_features,
+                                          preprocessor_path=preprocessor_path)
+    if not os.listdir(preprocessor_path) or cfg.preprocessor_applicator.refresh == True:
+        preprocessor.save()
+
+    test_cont = preprocessor.perform(X_test, y_test)
 
     device = torch.device(cfg.dataset.device)
 

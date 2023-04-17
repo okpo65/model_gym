@@ -12,21 +12,9 @@ from omegaconf import DictConfig, OmegaConf
 from src.dataset.dataset import load_train_data, load_test_data
 from src.models.infer import inference, load_model, inference_mlp, inference_dae, inference_feature_importance
 from src.evaluation.evaluation import css_metric
-from src.dataset.preprocessing import Preprocessor, Preprocessor2
 from src.utils.constants import JARVIS_NULL_REPLACEMENTS
-from src.utils.utils import DictX
+from src.utils.constants import representation_key, __all_model__
 
-__all_model__ = DictX(
-    catboost='catboost',
-    lgbm='lgbm',
-    xgboost='xgboost',
-    mlp='mlp',
-    deepstack_dae='deepstack_dae',
-    bottleneck_dae='bottleneck_dae',
-    transformer_dae='transformer_dae',
-    tabnet='tabnet'
-)
-representation_key = 'representation'
 
 @hydra.main(config_path="config/", config_name='onpremise', version_base='1.2.0')
 def _main(cfg: DictConfig):

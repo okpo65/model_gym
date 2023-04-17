@@ -1,12 +1,11 @@
 root: /home/peoplefund/workspace/jihwan-css/CSS
 
 #train: ${dataset.root}/dataset/train/catboost/df_1_to_2_seg1.parquet
-train: ${dataset.root}/dataset/train/df_1_to_7_all_light.parquet
+train: ${dataset.root}/dataset/train/df_1_to_2_all_light.parquet
 #test: ${dataset.root}/dataset/test/df_05_jb_light.parquet
-test: /data/cds_lc_raw/2022-08/all.parquet
-#test: ${dataset.root}/dataset/test/df_08_all.parquet
+test: ${dataset.root}/dataset/train/df_8_all_light.parquet
 
-save_path: ${dataset.root}/dataset/test/df_05_jb_light_saved.csv
+save_path: ${dataset.root}/dataset/test/df_07_jb_light_saved.csv
 
 target_name: target
 
@@ -14,5 +13,5 @@ seed: 42
 
 num_workers: 32
 
-device: 'cuda:0'
+device: 'cuda:2'
 

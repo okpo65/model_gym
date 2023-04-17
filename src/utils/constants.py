@@ -1,3 +1,23 @@
+from src.utils.utils import DictX
+
+__all_model__ = DictX(
+    catboost='catboost',
+    lgbm='lgbm',
+    xgboost='xgboost',
+    mlp='mlp',
+    deepstack_dae='deepstack_dae',
+    bottleneck_dae='bottleneck_dae',
+    transformer_dae='transformer_dae',
+    tabnet='tabnet',
+    tabnet_pretrainer='tabnet_pretrainer',
+    dae_mlp='dae_mlp',
+    gmm_dae='gmm_dae'
+)
+
+representation_key = 'representation'
+
+
+
 JARVIS_NULL_REPLACEMENTS = {
      'BS0000133': {999999999: 0},
      'CF0000912': {-999: 0},

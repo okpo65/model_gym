@@ -1,10 +1,12 @@
 root: /home/peoplefund/workspace/jihwan-css/CSS
 
-#train: /home/peoplefund/workspace/jihwan-css/ModelStorage/res/latent/tabnet_test_latent.parquet
-#train: ${dataset.root}/dataset/train/df_1_to_7_all_light.parquet
-train: ${dataset.root}/dataset/train/df_1_to_7_tabnet32.parquet
-#test: ${dataset.root}/dataset/train/df_1_to_7_all_light.parquet
-test: ${dataset.root}/dataset/test/df_8_tabnet32.parquet
+train: /home/peoplefund/workspace/jihwan-css/ModelStorage/res/latent/5_tabnet_qt3000_32_1to7_train_latent.parquet
+#train: ${dataset.root}/dataset/train/df_1_to_2_all_light.parquet
+#train: ${dataset.root}/dataset/train/df_1_to_7_tabnet32.parquet
+#test: ${dataset.root}/dataset/train/df_1_to_2_all_light.parquet
+#test: ${dataset.root}/dataset/train/df_8_all_light.parquet
+#test: ${dataset.root}/dataset/test/df_8_tabnet32.parquet
+test: /home/peoplefund/workspace/jihwan-css/ModelStorage/res/latent/5_tabnet_qt3000_32_1to7_test_latent.parquet
 
 target_name: target
 

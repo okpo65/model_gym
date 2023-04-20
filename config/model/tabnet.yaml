@@ -1,8 +1,8 @@
 folds: 1
 
 params:
-  n_d: 30
-  n_a: 30
+  n_d: 32
+  n_a: 32
   n_steps: 3
   gamma: 1.3
   lambda_sparse: 1e-3
@@ -24,5 +24,5 @@ eval_metric: logloss # 'auc', 'accuracy', 'balanced_accuracy', 'logloss'
 name: tabnet
 
 path: res/models
-result: tabnet_qt3000_32_1to2_av #tabnet_qt3000_32_1to7_test
+result: tabet_qt3_32_3_1024_256_1to7 # tabnet_qt3000_32_1to7_sota #tabnet_qt3000_32_1to7_test
 verbose: 500

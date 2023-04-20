@@ -316,7 +316,7 @@ class BaseModel(metaclass=ABCMeta):
 
             # score
             scores = self.metric(pred, y_valid)
-            print(f"KS: {scores}")
+            print(f"Train KS: {scores}")
             self.result = ModelResult(
                 oof_preds=np.array([]),
                 models=models,

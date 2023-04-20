@@ -27,7 +27,7 @@ def _main(cfg: DictConfig):
     # model load
     path = Path(get_original_cwd()) / cfg.model.path / cfg.model.result
     results = load_model(path)
-
+    print()
     # data load
     X_train, y_train = load_train_data(cfg)
     X_test, y_test = load_test_data(cfg)
@@ -70,15 +70,26 @@ def _main(cfg: DictConfig):
         latent = inference_dae_mlp(results, test_dl, device)
     elif model_name == __all_model__.tabnet:
         X_test, y_test = test_cont.get_dataframe()
-        latent = inference_tabnet_latent(results, X_test, y_test)
+        latent = inference_tabnet_latent(results, X_test, y_test, num_workers=cfg.dataset.num_workers)
 
-    latent_path = (
-            Path(get_original_cwd()) / cfg.output.path / cfg.output.name
-    )
+
+    if isinstance(latent, list):
+        for idx, l in enumerate(latent):
+            latent_path = (
+                    Path(get_original_cwd()) / cfg.output.path / f'{idx}_{cfg.output.name}'
+            )
+            save_latent(l, latent_path, cfg.dataset.target_name, y_test)
+    else:
+        latent_path = (
+                Path(get_original_cwd()) / cfg.output.path / cfg.output.name
+        )
+        save_latent(latent, latent_path, cfg.dataset.target_name, y_test)
+
+def save_latent(latent, path, target_name, y_test):
     df_latent, _ = latent.get_dataframe()
     df_latent.columns = [f"{c}" for c in df_latent.columns.tolist()]
-    df_latent[cfg.dataset.target_name] = y_test.values
-    df_latent.to_parquet(latent_path)
+    df_latent[target_name] = y_test.values
+    df_latent.to_parquet(path)
 
 if __name__ == "__main__":
     _main()

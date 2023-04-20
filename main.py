@@ -10,14 +10,13 @@ from src.models.mlp import MLP
 from src.models.dae_mlp import DAEMLP
 from src.models.gmm_dae import GMMDAE
 from src.evaluation.evaluation import css_metric
-from src.utils.utils import WANDB_KEY
 from src.dataset.preprocessing import PreprocessorApplicator, get_preprocessor_path
 import hydra
 from src.utils.utils import DictX
 from omegaconf import DictConfig
 from src.models.infer import inference_dae, load_model
 import wandb
-from src.utils.constants import representation_key, __all_model__
+from src.utils.constants import WANDB_KEY, representation_key, __all_model__
 
 
 @hydra.main(config_path='config/', config_name='main', version_base='1.2.0')

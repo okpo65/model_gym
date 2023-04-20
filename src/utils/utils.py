@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from operator import lt, gt
 
-WANDB_KEY = '196381c208adc1e785f267c966fe745bf68e987a'
 
 def read_csv_file(file_path):
     """

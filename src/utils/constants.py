@@ -1,5 +1,7 @@
 from src.utils.utils import DictX
 
+WANDB_KEY = '196381c208adc1e785f267c966fe745bf68e987a'
+
 __all_model__ = DictX(
     catboost='catboost',
     lgbm='lgbm',

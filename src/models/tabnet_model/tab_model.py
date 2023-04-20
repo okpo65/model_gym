@@ -107,9 +107,9 @@ class TabNetClassifier(TabModel):
         return res
 
     # get representation latent
-    def predict_latent(self, X):
+    def predict_latent(self, X, num_workers):
         """
-        Make predictions for representational latent (dimension: n_d)
+        Make predictions for all of representational latent list (#: n_steps + 1, dimension: n_d)
 
         Parameters
         ----------
@@ -119,8 +119,8 @@ class TabNetClassifier(TabModel):
         Returns
         -------
         N : X.shape[0]
-        res : (N, n_d)
-
+        latent_results : (n_steps + 1, N, n_d)
+        first one is the addition of all the latent space
         """
         self.network.eval()
 
@@ -128,16 +128,27 @@ class TabNetClassifier(TabModel):
             PredictDataset(X),
             batch_size=self.batch_size,
             shuffle=False,
+            num_workers=num_workers
         )
 
-        results = []
+        latent_sum_results = []
+        latent_list_results = []
+
         for batch_nb, data in enumerate(dataloader):
             data = data.to(self.device).float()
+            latent_list = self.network.forward_latent(data)
+            latent_list = latent_list.cpu().detach().numpy()
+            latent_sum = np.sum(latent_list, axis=0)
+            latent_sum_results.append(latent_sum)
 
-            latent = self.network.forward_latent(data)
-            results.append(latent.cpu().detach().numpy())
-        res = np.vstack(results)
-        return res
+            if len(latent_list_results) == 0:
+                latent_list_results = latent_list
+            else:
+                latent_list_results = np.concatenate((latent_list_results, latent_list), axis=1)
+
+        latent_sum_result = np.vstack(latent_sum_results)
+        latent_results = np.insert(latent_list_results, 0, np.expand_dims(latent_sum_result, axis=0), axis=0)
+        return latent_results
 
 class TabNetRegressor(TabModel):
     def __post_init__(self):

@@ -6,9 +6,9 @@
 
 
 defaults:
-  - dataset: dataset
+  - dataset: dataset_latent
   - model: catboost
-  - features: features_jb_av2
+  - features: features_latent
   - preprocessing: preprocessing_for_ml
 
 #representation:

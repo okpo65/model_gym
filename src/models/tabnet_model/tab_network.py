@@ -511,7 +511,7 @@ class TabNetNoEmbeddings(torch.nn.Module):
     
     def forward_latent(self, x):
         steps_output, _ = self.encoder(x)
-        res = torch.sum(torch.stack(steps_output, dim=0), dim=0)
+        res = torch.stack(steps_output, dim=0)
         return res
 
 

@@ -91,7 +91,8 @@ def inference_tabnet(result: ModelResult,
 
 def inference_tabnet_latent(result: ModelResult,
                             X_test: pd.DataFrame,
-                            y_test: pd.Series) -> np.ndarray:
+                            y_test: pd.Series,
+                            num_workers: int) -> list[np.ndarray]:
     """
     :param result: ModelResult Object
     :param X_test: dataframe
@@ -101,17 +102,20 @@ def inference_tabnet_latent(result: ModelResult,
     """
 
     folds = len(result.models)
-    latent = np.zeros((X_test.shape[0], ))
 
     for model in tqdm(result.models.values(), total=folds):
-        latent = model.predict_latent(X_test.to_numpy())
+        latent_list = model.predict_latent(X_test.to_numpy(), num_workers=num_workers)
 
-    assert latent.shape[0] == len(X_test)
-    new_test_cont = DataContainer(df=pd.DataFrame(latent),
-                                  df_y=y_test,
-                                  len_cat=0,
-                                  len_num=latent.shape[1])
-    return new_test_cont
+    assert latent_list[0].shape[0] == len(X_test)
+
+    test_cont_list = []
+    for latent in latent_list:
+        new_test_cont = DataContainer(df=pd.DataFrame(latent),
+                                      df_y=y_test,
+                                      len_cat=0,
+                                      len_num=latent.shape[1])
+        test_cont_list.append(new_test_cont)
+    return test_cont_list
 
 
 def inference_dae_mlp(result: ModelResult,
@@ -133,8 +137,6 @@ def inference_dae_mlp(result: ModelResult,
         with torch.no_grad():
             prediction = _model.predict(test_dl)
         predictions.append(prediction)
-        print("predictions",prediction)
-        print("sdfsdf", np.concatenate(predictions))
         predictions = np.concatenate(predictions).reshape(-1)
         preds_proba += (
                 predictions / folds

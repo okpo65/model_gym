@@ -61,7 +61,7 @@ class PreprocessorApplicator(object):
         """
         # replace null
         self._replace_null_value(X_pp, self.cfg.numerical.replace_null)
-        
+
         # clipping
         clipping_path = f'{self.preprocessor_path}/clipping.csv'
         if os.path.exists(clipping_path):
